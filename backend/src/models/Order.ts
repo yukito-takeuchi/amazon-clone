@@ -1,0 +1,149 @@
+import pool from '../config/database';
+
+export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+
+export interface Order {
+  id: number;
+  user_id: string;
+  address_id?: number;
+  total_amount: number;
+  status: OrderStatus;
+  payment_method: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface OrderItem {
+  id: number;
+  order_id: number;
+  product_id?: number;
+  quantity: number;
+  price: number;
+  created_at: Date;
+  // Joined fields
+  product_name?: string;
+  product_image_url?: string;
+}
+
+export interface OrderWithItems extends Order {
+  items: OrderItem[];
+}
+
+export interface CreateOrderData {
+  userId: string;
+  addressId: number;
+  items: {
+    productId: number;
+    quantity: number;
+    price: number;
+  }[];
+  totalAmount: number;
+  paymentMethod: string;
+}
+
+export class OrderModel {
+  /**
+   * Create a new order
+   */
+  static async create(data: CreateOrderData): Promise<OrderWithItems> {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Create order
+      const orderResult = await client.query(
+        `INSERT INTO orders (user_id, address_id, total_amount, payment_method, status)
+         VALUES ($1, $2, $3, $4, 'pending')
+         RETURNING *`,
+        [data.userId, data.addressId, data.totalAmount, data.paymentMethod]
+      );
+
+      const order = orderResult.rows[0];
+
+      // Create order items
+      const items: OrderItem[] = [];
+      for (const item of data.items) {
+        const itemResult = await client.query(
+          `INSERT INTO order_items (order_id, product_id, quantity, price)
+           VALUES ($1, $2, $3, $4)
+           RETURNING *`,
+          [order.id, item.productId, item.quantity, item.price]
+        );
+        items.push(itemResult.rows[0]);
+
+        // Update product stock
+        await client.query(
+          'UPDATE products SET stock = stock - $1 WHERE id = $2',
+          [item.quantity, item.productId]
+        );
+      }
+
+      await client.query('COMMIT');
+
+      return {
+        ...order,
+        items,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Find order by ID with items
+   */
+  static async findById(id: number, userId: string): Promise<OrderWithItems | null> {
+    const orderResult = await pool.query(
+      'SELECT * FROM orders WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
+
+    if (orderResult.rows.length === 0) {
+      return null;
+    }
+
+    const order = orderResult.rows[0];
+
+    const itemsResult = await pool.query(
+      `SELECT
+        oi.*,
+        p.name as product_name,
+        p.image_url as product_image_url
+       FROM order_items oi
+       LEFT JOIN products p ON oi.product_id = p.id
+       WHERE oi.order_id = $1
+       ORDER BY oi.created_at ASC`,
+      [id]
+    );
+
+    return {
+      ...order,
+      items: itemsResult.rows,
+    };
+  }
+
+  /**
+   * Find all orders for a user
+   */
+  static async findByUserId(userId: string): Promise<Order[]> {
+    const result = await pool.query(
+      'SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+    return result.rows;
+  }
+
+  /**
+   * Update order status
+   */
+  static async updateStatus(id: number, status: OrderStatus): Promise<Order | null> {
+    const result = await pool.query(
+      'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
+      [status, id]
+    );
+    return result.rows[0] || null;
+  }
+}

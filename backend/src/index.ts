@@ -3,9 +3,27 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
 
 // Load environment variables
 dotenv.config();
+
+// Import database and firebase config
+import './config/database';
+import './config/firebase';
+
+// Import routes
+import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
+import addressRoutes from './routes/addressRoutes';
+import productRoutes from './routes/productRoutes';
+import adminRoutes from './routes/adminRoutes';
+import cartRoutes from './routes/cartRoutes';
+import orderRoutes from './routes/orderRoutes';
+
+// Import middleware
+import { errorHandler, notFound } from './middleware/errorHandler';
+import { CategoryModel } from './models/Category';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
@@ -20,26 +38,51 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve uploaded files (development only)
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+}
+
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });
 });
 
-// API routes will be added here
+// API routes
 app.get('/api', (req: Request, res: Response) => {
-  res.json({ message: 'E-commerce API' });
+  res.json({ message: 'E-commerce API v1.0' });
 });
 
-// Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: any) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/addresses', addressRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
+
+// Categories endpoint (public)
+app.get('/api/categories', async (req: Request, res: Response) => {
+  try {
+    const categories = await CategoryModel.findAll();
+    res.json({ categories });
+  } catch (error) {
+    console.error('Get categories error:', error);
+    res.status(500).json({ error: 'Failed to get categories' });
+  }
 });
+
+// 404 handler
+app.use(notFound);
+
+// Error handling middleware
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV}`);
+  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔗 API URL: http://localhost:${PORT}/api`);
 });
 
 export default app;

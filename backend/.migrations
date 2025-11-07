@@ -1,0 +1,6 @@
+{
+  "database-url": {
+    "env": "DATABASE_URL"
+  },
+  "migrations-dir": "migrations"
+}
