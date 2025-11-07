@@ -52,6 +52,49 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 };
 
 /**
+ * Login user using Firebase REST API
+ */
+export const login = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+
+    // Use Firebase REST API to authenticate
+    const { signInWithEmailAndPassword } = await import('../services/firebaseAuthService');
+
+    const firebaseResponse = await signInWithEmailAndPassword(email, password);
+
+    // Get user details from database
+    const user = await UserModel.findByEmail(email);
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found in database' });
+      return;
+    }
+
+    res.json({
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        isAdmin: user.is_admin,
+      },
+      idToken: firebaseResponse.idToken,
+      expiresIn: firebaseResponse.expiresIn,
+    });
+  } catch (error: any) {
+    console.error('Login error:', error);
+
+    if (error.message === 'Invalid email or password') {
+      res.status(401).json({ error: 'Invalid email or password' });
+      return;
+    }
+
+    res.status(500).json({ error: 'Login failed' });
+  }
+};
+
+/**
  * Get current user information
  */
 export const getCurrentUser = async (req: AuthRequest, res: Response): Promise<void> => {
