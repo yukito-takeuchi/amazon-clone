@@ -23,7 +23,7 @@ router.post(
 
 /**
  * @route   POST /api/auth/login
- * @desc    Login user (returns custom token)
+ * @desc    Login user
  * @access  Public
  */
 router.post(

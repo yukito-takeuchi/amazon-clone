@@ -3,6 +3,7 @@ import { auth } from '../config/firebase';
 import { UserModel } from '../models/User';
 import { AppError } from '../middleware/errorHandler';
 import { AuthRequest } from '../middleware/auth';
+import { signInWithEmailAndPassword } from '../services/firebaseAuthService';
 
 /**
  * Register new user
@@ -52,24 +53,25 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 };
 
 /**
- * Login user using Firebase REST API
+ * Login user
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
-    // Use Firebase REST API to authenticate
-    const { signInWithEmailAndPassword } = await import('../services/firebaseAuthService');
-
+    // Authenticate with Firebase REST API
     const firebaseResponse = await signInWithEmailAndPassword(email, password);
 
-    // Get user details from database
-    const user = await UserModel.findByEmail(email);
+    // Get user from database
+    const user = await UserModel.findByFirebaseUid(firebaseResponse.localId);
 
     if (!user) {
-      res.status(404).json({ error: 'User not found in database' });
+      res.status(404).json({ error: 'User not found' });
       return;
     }
+
+    // Generate custom token for client
+    const customToken = await auth.createCustomToken(firebaseResponse.localId);
 
     res.json({
       message: 'Login successful',
@@ -79,18 +81,23 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         name: user.name,
         isAdmin: user.is_admin,
       },
+      customToken,
       idToken: firebaseResponse.idToken,
-      expiresIn: firebaseResponse.expiresIn,
     });
   } catch (error: any) {
     console.error('Login error:', error);
 
-    if (error.message === 'Invalid email or password') {
-      res.status(401).json({ error: 'Invalid email or password' });
+    if (error.response?.data?.error?.message === 'EMAIL_NOT_FOUND') {
+      res.status(401).json({ message: 'Invalid email or password' });
       return;
     }
 
-    res.status(500).json({ error: 'Login failed' });
+    if (error.response?.data?.error?.message === 'INVALID_PASSWORD') {
+      res.status(401).json({ message: 'Invalid email or password' });
+      return;
+    }
+
+    res.status(500).json({ message: 'Login failed' });
   }
 };
 
