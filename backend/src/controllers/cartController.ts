@@ -1,6 +1,48 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { CartModel } from '../models/Cart';
+import { CartModel, CartWithItems } from '../models/Cart';
+
+/**
+ * Transform cart data to frontend format
+ */
+function transformCartForFrontend(cart: CartWithItems | null) {
+  if (!cart) {
+    return {
+      id: '',
+      userId: '',
+      items: [],
+      totalItems: 0,
+      totalPrice: 0,
+    };
+  }
+
+  const transformedItems = cart.items.map((item) => ({
+    id: item.id.toString(),
+    productId: item.product_id.toString(),
+    quantity: item.quantity,
+    product: {
+      id: item.product_id.toString(),
+      name: item.product_name || '',
+      price: item.product_price || 0,
+      imageUrl: item.product_image_url || null,
+      stock: item.product_stock || 0,
+    },
+  }));
+
+  const totalItems = transformedItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPrice = transformedItems.reduce(
+    (sum, item) => sum + item.product.price * item.quantity,
+    0
+  );
+
+  return {
+    id: cart.id.toString(),
+    userId: cart.user_id,
+    items: transformedItems,
+    totalItems,
+    totalPrice,
+  };
+}
 
 /**
  * Get cart with items
@@ -13,8 +55,9 @@ export const getCart = async (req: AuthRequest, res: Response): Promise<void> =>
     }
 
     const cart = await CartModel.getCartWithItems(req.user.id);
+    const transformedCart = transformCartForFrontend(cart);
 
-    res.json({ cart });
+    res.json({ cart: transformedCart });
   } catch (error) {
     console.error('Get cart error:', error);
     res.status(500).json({ error: 'Failed to get cart' });
@@ -33,11 +76,15 @@ export const addItemToCart = async (req: AuthRequest, res: Response): Promise<vo
 
     const { productId, quantity = 1 } = req.body;
 
-    const item = await CartModel.addItem(req.user.id, parseInt(productId), parseInt(quantity));
+    await CartModel.addItem(req.user.id, parseInt(productId), parseInt(quantity));
+
+    // Return updated cart
+    const cart = await CartModel.getCartWithItems(req.user.id);
+    const transformedCart = transformCartForFrontend(cart);
 
     res.status(201).json({
       message: 'Item added to cart',
-      item,
+      cart: transformedCart,
     });
   } catch (error) {
     console.error('Add item to cart error:', error);
@@ -65,9 +112,13 @@ export const updateCartItem = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
+    // Return updated cart
+    const cart = await CartModel.getCartWithItems(req.user.id);
+    const transformedCart = transformCartForFrontend(cart);
+
     res.json({
       message: 'Cart item updated',
-      item,
+      cart: transformedCart,
     });
   } catch (error) {
     console.error('Update cart item error:', error);
@@ -94,7 +145,14 @@ export const removeCartItem = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    res.json({ message: 'Item removed from cart' });
+    // Return updated cart
+    const cart = await CartModel.getCartWithItems(req.user.id);
+    const transformedCart = transformCartForFrontend(cart);
+
+    res.json({
+      message: 'Item removed from cart',
+      cart: transformedCart,
+    });
   } catch (error) {
     console.error('Remove cart item error:', error);
     res.status(500).json({ error: 'Failed to remove cart item' });

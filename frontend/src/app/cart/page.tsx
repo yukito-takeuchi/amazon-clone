@@ -35,9 +35,9 @@ export default function CartPage() {
     }
   };
 
-  const handleUpdateQuantity = async (productId: string, quantity: number) => {
+  const handleUpdateQuantity = async (itemId: string, quantity: number) => {
     try {
-      const updatedCart = await cartApi.updateItem(productId, { quantity });
+      const updatedCart = await cartApi.updateItem(itemId, { quantity });
       setCart(updatedCart);
     } catch (error: any) {
       console.error('Failed to update quantity:', error);
@@ -45,11 +45,11 @@ export default function CartPage() {
     }
   };
 
-  const handleRemoveItem = async (productId: string) => {
+  const handleRemoveItem = async (itemId: string) => {
     if (!confirm('この商品をカートから削除しますか？')) return;
 
     try {
-      const updatedCart = await cartApi.removeItem(productId);
+      const updatedCart = await cartApi.removeItem(itemId);
       setCart(updatedCart);
     } catch (error: any) {
       console.error('Failed to remove item:', error);
@@ -92,9 +92,17 @@ export default function CartPage() {
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {cart.items.map((item) => {
-              const imageUrl = item.product.imageUrl
-                ? `${process.env.NEXT_PUBLIC_IMAGE_URL}/${item.product.imageUrl}`
-                : '/placeholder-product.png';
+              // Handle imageUrl - it might be null or a full URL
+              let imageUrl = '/placeholder-product.png';
+              if (item.product?.imageUrl) {
+                if (item.product.imageUrl.startsWith('http')) {
+                  // Full URL (GCS)
+                  imageUrl = item.product.imageUrl;
+                } else {
+                  // Relative path (local development)
+                  imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3001'}/${item.product.imageUrl}`;
+                }
+              }
 
               return (
                 <div
@@ -105,7 +113,7 @@ export default function CartPage() {
                   <div className="relative w-24 h-24 bg-gray-100 rounded flex-shrink-0">
                     <Image
                       src={imageUrl}
-                      alt={item.product.name}
+                      alt={item.product?.name || '商品画像'}
                       fill
                       className="object-contain p-2"
                       sizes="96px"
@@ -116,12 +124,12 @@ export default function CartPage() {
                   <div className="flex-1">
                     <h3
                       className="font-semibold text-gray-900 mb-1 cursor-pointer hover:text-[#FF9900]"
-                      onClick={() => router.push(`/products/${item.product.id}`)}
+                      onClick={() => router.push(`/products/${item.product?.id}`)}
                     >
-                      {item.product.name}
+                      {item.product?.name || '商品名不明'}
                     </h3>
                     <p className="text-lg font-bold text-gray-900 mb-2">
-                      ¥{item.product.price.toLocaleString()}
+                      ¥{(item.product?.price || 0).toLocaleString()}
                     </p>
 
                     <div className="flex items-center gap-4">
@@ -131,14 +139,14 @@ export default function CartPage() {
                           value={item.quantity}
                           onChange={(e) =>
                             handleUpdateQuantity(
-                              item.product.id,
+                              item.id,
                               Number(e.target.value)
                             )
                           }
                           className="border border-gray-300 rounded px-2 py-1"
                         >
                           {Array.from(
-                            { length: Math.min(item.product.stock, 10) },
+                            { length: Math.min(item.product?.stock || 10, 10) },
                             (_, i) => i + 1
                           ).map((num) => (
                             <option key={num} value={num}>
@@ -149,7 +157,7 @@ export default function CartPage() {
                       </div>
 
                       <button
-                        onClick={() => handleRemoveItem(item.product.id)}
+                        onClick={() => handleRemoveItem(item.id)}
                         className="text-red-600 hover:text-red-700 flex items-center gap-1"
                       >
                         <FiTrash2 />
@@ -161,7 +169,7 @@ export default function CartPage() {
                   {/* Subtotal */}
                   <div className="text-right">
                     <p className="text-lg font-bold text-gray-900">
-                      ¥{(item.product.price * item.quantity).toLocaleString()}
+                      ¥{((item.product?.price || 0) * item.quantity).toLocaleString()}
                     </p>
                   </div>
                 </div>
