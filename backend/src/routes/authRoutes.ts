@@ -2,7 +2,7 @@ import express from 'express';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validation';
 import { authenticateUser } from '../middleware/auth';
-import { register, getCurrentUser } from '../controllers/authController';
+import { register, login, getCurrentUser } from '../controllers/authController';
 
 const router = express.Router();
 
@@ -19,6 +19,20 @@ router.post(
     body('name').notEmpty().withMessage('Name is required'),
   ]),
   register
+);
+
+/**
+ * @route   POST /api/auth/login
+ * @desc    Login user
+ * @access  Public
+ */
+router.post(
+  '/login',
+  validate([
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().withMessage('Password is required'),
+  ]),
+  login
 );
 
 /**
