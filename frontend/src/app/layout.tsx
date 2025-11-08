@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Amazon Clone - Next.js E-Commerce",
   description: "Full-stack e-commerce application built with Next.js",
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
