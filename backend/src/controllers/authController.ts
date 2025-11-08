@@ -53,7 +53,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 };
 
 /**
- * Login user
+ * Login user using Firebase REST API
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -62,11 +62,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // Authenticate with Firebase REST API
     const firebaseResponse = await signInWithEmailAndPassword(email, password);
 
-    // Get user from database
+    // Get user from database using Firebase UID
     const user = await UserModel.findByFirebaseUid(firebaseResponse.localId);
 
     if (!user) {
-      res.status(404).json({ error: 'User not found' });
+      res.status(404).json({ error: 'User not found in database' });
       return;
     }
 
@@ -83,21 +83,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       },
       customToken,
       idToken: firebaseResponse.idToken,
+      expiresIn: firebaseResponse.expiresIn,
     });
   } catch (error: any) {
     console.error('Login error:', error);
 
-    if (error.response?.data?.error?.message === 'EMAIL_NOT_FOUND') {
-      res.status(401).json({ message: 'Invalid email or password' });
+    if (error.message === 'Invalid email or password') {
+      res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
 
-    if (error.response?.data?.error?.message === 'INVALID_PASSWORD') {
-      res.status(401).json({ message: 'Invalid email or password' });
-      return;
-    }
-
-    res.status(500).json({ message: 'Login failed' });
+    res.status(500).json({ error: 'Login failed' });
   }
 };
 
