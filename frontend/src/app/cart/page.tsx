@@ -143,7 +143,7 @@ export default function CartPage() {
                               Number(e.target.value)
                             )
                           }
-                          className="border border-gray-300 rounded px-2 py-1"
+                          className="border border-gray-300 rounded px-2 py-1 text-gray-900 bg-white"
                         >
                           {Array.from(
                             { length: Math.min(item.product?.stock || 10, 10) },
