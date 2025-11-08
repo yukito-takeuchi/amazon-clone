@@ -8,32 +8,28 @@ interface AmazonIconProps {
 
 export const AmazonIcon: React.FC<AmazonIconProps> = ({ 
   className = '', 
-  width = 28, 
-  height = 28 
+  width = 32, 
+  height = 32 
 }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
+      viewBox="0 0 100 100"
       width={width}
       height={height}
       className={className}
     >
-      {/* Shopping cart icon */}
-      <path 
-        d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" 
-        fill="currentColor"
+      {/* Amazon logo: lowercase 'a' with orange smile arrow */}
+      {/* Letter 'a' */}
+      <path
+        d="M50 15 C38 15, 28 20, 28 30 C28 40, 36 48, 46 48 C49 48, 52 47, 54 46 L58 58 L68 58 L62 42 C64 40, 65 37, 65 34 C65 30, 63 27, 60 25 C62 21, 63 16, 63 11 C63 5, 58 1, 52 1 C49 1, 47 2, 45 3 C43 2, 41 1, 39 1 C33 1, 28 5, 28 11 C28 16, 30 21, 32 25 C29 27, 27 30, 27 34 C27 37, 28 40, 30 42 L24 58 L34 58 L38 46 C40 47, 43 48, 46 48 C56 48, 72 40, 72 30 C72 20, 62 15, 50 15 Z M50 25 C55 25, 58 28, 58 33 C58 38, 55 41, 50 41 C45 41, 42 38, 42 33 C42 28, 45 25, 50 25 Z"
+        fill="#232F3E"
       />
-      {/* Arrow from A to Z (Amazon's signature smile) */}
-      <path 
-        d="M18 2l-2 2-2-2h4z" 
-        fill="#FF9900"
-      />
-      <path 
-        d="M14 4l2 2 2-2h-4z" 
+      {/* Orange smile arrow from A to Z - curved upward */}
+      <path
+        d="M28 65 Q38 60, 48 59 Q58 58, 68 60 Q73 61, 78 64 L81 60 Q76 58, 71 57 Q61 55, 51 57 Q41 59, 31 63 Z"
         fill="#FF9900"
       />
     </svg>
   );
 };
-
