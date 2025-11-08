@@ -7,6 +7,7 @@ import { FiShoppingCart, FiUser, FiLogOut } from 'react-icons/fi';
 import { useAuthStore } from '@/store/authStore';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
+import { AmazonIcon } from './AmazonIcon';
 
 export const Header: React.FC = () => {
   const router = useRouter();
@@ -26,10 +27,18 @@ export const Header: React.FC = () => {
     <header className="bg-[#131921] text-white">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-1">
-            <span className="text-2xl font-bold">amazon</span>
-            <span className="text-[#FF9900] text-sm">.clone</span>
+          {/* Logo - Amazon style */}
+          <Link href="/" className="flex items-center space-x-2 hover:opacity-90 transition-opacity">
+            <AmazonIcon className="text-white" width={32} height={32} />
+            <div className="flex flex-col leading-none">
+              <span className="text-lg font-bold tracking-tight text-white">amazon.clone</span>
+              <span className="text-[10px] text-gray-400 leading-none">.co.jp</span>
+            </div>
+            <div className="flex items-center ml-1">
+              <span className="text-[10px] font-bold bg-[#FF9900] text-[#131921] px-1.5 py-0.5 rounded leading-none">
+                Prime
+              </span>
+            </div>
           </Link>
 
           {/* Navigation */}
