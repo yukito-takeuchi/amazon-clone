@@ -12,21 +12,32 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
-  const imageUrl = product.imageUrl
-    ? `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`
-    : '/placeholder-product.png';
+  // Handle imageUrl - backend returns full URL
+  let imageUrl = null;
+  if (product.imageUrl) {
+    if (product.imageUrl.startsWith('http')) {
+      imageUrl = product.imageUrl;
+    } else {
+      imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`;
+    }
+  }
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
       <Link href={`/products/${product.id}`}>
-        <div className="relative h-48 bg-gray-100">
-          <Image
-            src={imageUrl}
-            alt={product.name}
-            fill
-            className="object-contain p-4"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
+        <div className="relative h-48 bg-gray-100 flex items-center justify-center">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={product.name}
+              fill
+              className="object-contain p-4"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              unoptimized
+            />
+          ) : (
+            <span className="text-gray-400">画像なし</span>
+          )}
         </div>
       </Link>
 

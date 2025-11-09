@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { FiShoppingCart, FiUser, FiLogOut } from 'react-icons/fi';
-import { useAuthStore } from '@/store/authStore';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { FiShoppingCart, FiUser, FiLogOut } from "react-icons/fi";
+import { useAuthStore } from "@/store/authStore";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase/config";
 
 export const Header: React.FC = () => {
   const router = useRouter();
@@ -16,9 +17,9 @@ export const Header: React.FC = () => {
     try {
       await signOut(auth);
       logout();
-      router.push('/login');
+      router.push("/login");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     }
   };
 
@@ -27,9 +28,19 @@ export const Header: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-1">
-            <span className="text-2xl font-bold">amazon</span>
-            <span className="text-[#FF9900] text-sm">.clone</span>
+          <Link
+            href="/"
+            className="flex items-center hover:border hover:border-white hover:border-opacity-50 p-1 transition-all"
+          >
+            <Image
+              src="/amazon-com-light.svg"
+              alt="Amazon"
+              width={100}
+              height={30}
+              priority
+              className="h-8 w-auto"
+            />
+            <span className="text-xs ml-1 -mb-1">.jp</span>
           </Link>
 
           {/* Navigation */}
