@@ -87,9 +87,15 @@ export default function AdminProductsPage() {
               </thead>
               <tbody>
                 {products.map((product) => {
-                  const imageUrl = product.imageUrl
-                    ? `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`
-                    : null;
+                  // Handle imageUrl - backend returns full URL
+                  let imageUrl = null;
+                  if (product.imageUrl) {
+                    if (product.imageUrl.startsWith('http')) {
+                      imageUrl = product.imageUrl;
+                    } else {
+                      imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`;
+                    }
+                  }
 
                   return (
                     <tr key={product.id} className="border-b hover:bg-gray-50">

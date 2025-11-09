@@ -12,9 +12,15 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
-  const imageUrl = product.imageUrl
-    ? `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`
-    : null;
+  // Handle imageUrl - backend returns full URL
+  let imageUrl = null;
+  if (product.imageUrl) {
+    if (product.imageUrl.startsWith('http')) {
+      imageUrl = product.imageUrl;
+    } else {
+      imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`;
+    }
+  }
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">

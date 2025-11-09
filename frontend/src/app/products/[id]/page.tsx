@@ -77,9 +77,15 @@ export default function ProductDetailPage() {
     return null;
   }
 
-  const imageUrl = product.imageUrl
-    ? `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`
-    : null;
+  // Handle imageUrl - backend returns full URL
+  let imageUrl = null;
+  if (product.imageUrl) {
+    if (product.imageUrl.startsWith('http')) {
+      imageUrl = product.imageUrl;
+    } else {
+      imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
