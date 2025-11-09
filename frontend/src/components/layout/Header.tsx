@@ -40,6 +40,7 @@ export const Header: React.FC = () => {
               priority
               className="h-8 w-auto"
             />
+            <span className="text-xs ml-1 -mb-1">.jp</span>
           </Link>
 
           {/* Navigation */}
