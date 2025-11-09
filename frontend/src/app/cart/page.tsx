@@ -118,6 +118,7 @@ export default function CartPage() {
                         fill
                         className="object-contain p-2"
                         sizes="96px"
+                        unoptimized
                       />
                     ) : (
                       <span className="text-xs text-gray-400">画像なし</span>

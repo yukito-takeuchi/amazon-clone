@@ -29,7 +29,22 @@ const app: Application = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(helmet());
+// Helmet configuration with environment-aware CSP
+const helmetConfig = {
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: process.env.NODE_ENV === 'production'
+        ? ["'self'", "data:", "https://storage.googleapis.com"]
+        : ["'self'", "data:", "http://localhost:3001"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+    },
+  },
+  crossOriginResourcePolicy: { policy: "cross-origin" as const },
+};
+
+app.use(helmet(helmetConfig));
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true,

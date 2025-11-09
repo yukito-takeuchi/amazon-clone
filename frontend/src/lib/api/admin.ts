@@ -13,6 +13,20 @@ export interface CreateProductData {
 
 export interface UpdateProductData extends Partial<CreateProductData> {}
 
+// Transform backend snake_case response to frontend camelCase
+const transformProduct = (backendProduct: any): Product => ({
+  id: String(backendProduct.id),
+  name: backendProduct.name,
+  description: backendProduct.description,
+  price: parseFloat(backendProduct.price),
+  stock: backendProduct.stock,
+  categoryId: String(backendProduct.category_id),
+  imageUrl: backendProduct.image_url || null,
+  isActive: backendProduct.is_active,
+  createdAt: backendProduct.created_at,
+  updatedAt: backendProduct.updated_at,
+});
+
 export const adminApi = {
   // Categories
   getCategories: async (): Promise<Category[]> => {
@@ -31,7 +45,7 @@ export const adminApi = {
       categoryId: data.categoryId,
     });
 
-    const product = response.data.product;
+    const product = transformProduct(response.data.product);
 
     // Step 2: Upload image if provided
     if (data.image && product.id) {
@@ -49,7 +63,7 @@ export const adminApi = {
       );
 
       // Return product with updated image URL
-      return { ...product, imageUrl: imageResponse.data.imageUrl };
+      return { ...product, imageUrl: imageResponse.data.imageUrl || imageResponse.data.image_url };
     }
 
     return product;
@@ -65,7 +79,7 @@ export const adminApi = {
     if (data.categoryId) updateData.categoryId = data.categoryId;
 
     const response = await apiClient.put(`/admin/products/${id}`, updateData);
-    let product = response.data.product;
+    let product = transformProduct(response.data.product);
 
     // Step 2: Upload image if provided
     if (data.image) {
@@ -83,7 +97,7 @@ export const adminApi = {
       );
 
       // Return product with updated image URL
-      product = { ...product, imageUrl: imageResponse.data.imageUrl };
+      product = { ...product, imageUrl: imageResponse.data.imageUrl || imageResponse.data.image_url };
     }
 
     return product;
@@ -95,11 +109,11 @@ export const adminApi = {
 
   getProduct: async (id: string): Promise<Product> => {
     const response = await apiClient.get(`/products/${id}`);
-    return response.data.product;
+    return transformProduct(response.data.product);
   },
 
   getAllProducts: async (): Promise<Product[]> => {
     const response = await apiClient.get('/admin/products');
-    return response.data.products;
+    return response.data.products.map(transformProduct);
   },
 };

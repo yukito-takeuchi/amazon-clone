@@ -108,6 +108,7 @@ export default function ProductDetailPage() {
                   fill
                   className="object-contain p-8"
                   sizes="(max-width: 768px) 100vw, 50vw"
+                  unoptimized
                 />
               ) : (
                 <span className="text-gray-400 text-lg">画像なし</span>

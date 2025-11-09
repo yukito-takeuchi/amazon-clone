@@ -8,6 +8,20 @@ export interface ProductsResponse {
   totalPages: number;
 }
 
+// Transform backend snake_case response to frontend camelCase
+const transformProduct = (backendProduct: any): Product => ({
+  id: String(backendProduct.id),
+  name: backendProduct.name,
+  description: backendProduct.description,
+  price: parseFloat(backendProduct.price),
+  stock: backendProduct.stock,
+  categoryId: String(backendProduct.category_id),
+  imageUrl: backendProduct.image_url || null,
+  isActive: backendProduct.is_active,
+  createdAt: backendProduct.created_at,
+  updatedAt: backendProduct.updated_at,
+});
+
 export const productsApi = {
   getAll: async (filters?: ProductFilters): Promise<ProductsResponse> => {
     const params = new URLSearchParams();
@@ -21,11 +35,14 @@ export const productsApi = {
     if (filters?.limit) params.append('limit', filters.limit.toString());
 
     const response = await apiClient.get(`/products?${params.toString()}`);
-    return response.data;
+    return {
+      ...response.data,
+      products: response.data.products.map(transformProduct),
+    };
   },
 
   getById: async (id: string): Promise<Product> => {
     const response = await apiClient.get(`/products/${id}`);
-    return response.data.product;
+    return transformProduct(response.data.product);
   },
 };

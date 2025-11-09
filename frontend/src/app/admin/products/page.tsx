@@ -108,6 +108,7 @@ export default function AdminProductsPage() {
                               fill
                               className="object-contain p-1"
                               sizes="64px"
+                              unoptimized
                             />
                           ) : (
                             <span className="text-xs text-gray-400">画像なし</span>
