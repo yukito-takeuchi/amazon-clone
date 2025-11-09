@@ -93,7 +93,7 @@ export default function CartPage() {
           <div className="lg:col-span-2 space-y-4">
             {cart.items.map((item) => {
               // Handle imageUrl - it might be null or a full URL
-              let imageUrl = '/placeholder-product.png';
+              let imageUrl = null;
               if (item.product?.imageUrl) {
                 if (item.product.imageUrl.startsWith('http')) {
                   // Full URL (GCS)
@@ -110,14 +110,18 @@ export default function CartPage() {
                   className="bg-white rounded-lg shadow-md p-4 flex gap-4"
                 >
                   {/* Product Image */}
-                  <div className="relative w-24 h-24 bg-gray-100 rounded flex-shrink-0">
-                    <Image
-                      src={imageUrl}
-                      alt={item.product?.name || '商品画像'}
-                      fill
-                      className="object-contain p-2"
-                      sizes="96px"
-                    />
+                  <div className="relative w-24 h-24 bg-gray-100 rounded flex-shrink-0 flex items-center justify-center">
+                    {imageUrl ? (
+                      <Image
+                        src={imageUrl}
+                        alt={item.product?.name || '商品画像'}
+                        fill
+                        className="object-contain p-2"
+                        sizes="96px"
+                      />
+                    ) : (
+                      <span className="text-xs text-gray-400">画像なし</span>
+                    )}
                   </div>
 
                   {/* Product Info */}

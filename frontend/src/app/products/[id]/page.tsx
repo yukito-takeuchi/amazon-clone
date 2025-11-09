@@ -79,7 +79,7 @@ export default function ProductDetailPage() {
 
   const imageUrl = product.imageUrl
     ? `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`
-    : '/placeholder-product.png';
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -94,14 +94,18 @@ export default function ProductDetailPage() {
         <div className="bg-white rounded-lg shadow-md p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Product Image */}
-            <div className="relative h-96 bg-gray-100 rounded-lg">
-              <Image
-                src={imageUrl}
-                alt={product.name}
-                fill
-                className="object-contain p-8"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
+            <div className="relative h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+              {imageUrl ? (
+                <Image
+                  src={imageUrl}
+                  alt={product.name}
+                  fill
+                  className="object-contain p-8"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              ) : (
+                <span className="text-gray-400 text-lg">画像なし</span>
+              )}
             </div>
 
             {/* Product Info */}

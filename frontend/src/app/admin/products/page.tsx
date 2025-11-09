@@ -89,19 +89,23 @@ export default function AdminProductsPage() {
                 {products.map((product) => {
                   const imageUrl = product.imageUrl
                     ? `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`
-                    : '/placeholder-product.png';
+                    : null;
 
                   return (
                     <tr key={product.id} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4">
-                        <div className="relative w-16 h-16 bg-gray-100 rounded">
-                          <Image
-                            src={imageUrl}
-                            alt={product.name}
-                            fill
-                            className="object-contain p-1"
-                            sizes="64px"
-                          />
+                        <div className="relative w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                          {imageUrl ? (
+                            <Image
+                              src={imageUrl}
+                              alt={product.name}
+                              fill
+                              className="object-contain p-1"
+                              sizes="64px"
+                            />
+                          ) : (
+                            <span className="text-xs text-gray-400">画像なし</span>
+                          )}
                         </div>
                       </td>
                       <td className="py-3 px-4">

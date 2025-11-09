@@ -22,41 +22,71 @@ export const adminApi = {
 
   // Products
   createProduct: async (data: CreateProductData): Promise<Product> => {
-    const formData = new FormData();
-    formData.append('name', data.name);
-    formData.append('description', data.description);
-    formData.append('price', data.price.toString());
-    formData.append('stock', data.stock.toString());
-    formData.append('categoryId', data.categoryId);
+    // Step 1: Create the product with JSON data
+    const response = await apiClient.post('/admin/products', {
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      stock: data.stock,
+      categoryId: data.categoryId,
+    });
 
-    if (data.image) {
+    const product = response.data.product;
+
+    // Step 2: Upload image if provided
+    if (data.image && product.id) {
+      const formData = new FormData();
       formData.append('image', data.image);
+
+      const imageResponse = await apiClient.post(
+        `/admin/products/${product.id}/image`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      // Return product with updated image URL
+      return { ...product, imageUrl: imageResponse.data.imageUrl };
     }
 
-    const response = await apiClient.post('/admin/products', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data.product;
+    return product;
   },
 
   updateProduct: async (id: string, data: UpdateProductData): Promise<Product> => {
-    const formData = new FormData();
+    // Step 1: Update the product data with JSON
+    const updateData: any = {};
+    if (data.name) updateData.name = data.name;
+    if (data.description) updateData.description = data.description;
+    if (data.price !== undefined) updateData.price = data.price;
+    if (data.stock !== undefined) updateData.stock = data.stock;
+    if (data.categoryId) updateData.categoryId = data.categoryId;
 
-    if (data.name) formData.append('name', data.name);
-    if (data.description) formData.append('description', data.description);
-    if (data.price !== undefined) formData.append('price', data.price.toString());
-    if (data.stock !== undefined) formData.append('stock', data.stock.toString());
-    if (data.categoryId) formData.append('categoryId', data.categoryId);
-    if (data.image) formData.append('image', data.image);
+    const response = await apiClient.put(`/admin/products/${id}`, updateData);
+    let product = response.data.product;
 
-    const response = await apiClient.put(`/admin/products/${id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data.product;
+    // Step 2: Upload image if provided
+    if (data.image) {
+      const formData = new FormData();
+      formData.append('image', data.image);
+
+      const imageResponse = await apiClient.post(
+        `/admin/products/${id}/image`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      // Return product with updated image URL
+      product = { ...product, imageUrl: imageResponse.data.imageUrl };
+    }
+
+    return product;
   },
 
   deleteProduct: async (id: string): Promise<void> => {
@@ -64,7 +94,7 @@ export const adminApi = {
   },
 
   getProduct: async (id: string): Promise<Product> => {
-    const response = await apiClient.get(`/admin/products/${id}`);
+    const response = await apiClient.get(`/products/${id}`);
     return response.data.product;
   },
 
