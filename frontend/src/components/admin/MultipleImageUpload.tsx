@@ -125,7 +125,9 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
       </Typography>
 
       <Grid container spacing={2}>
-        {images.map((image, index) => (
+        {images.map((image, index) => {
+          console.log(`Image ${index + 1}:`, image);
+          return (
           <Grid item xs={6} sm={4} md={3} key={image.id}>
             <Card
               sx={{
@@ -219,7 +221,8 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
               )}
             </Card>
           </Grid>
-        ))}
+          );
+        })}
 
         {/* 画像追加ボタン */}
         {remainingSlots > 0 && (
