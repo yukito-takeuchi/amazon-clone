@@ -26,6 +26,7 @@ export const LeftFilterSidebar: React.FC<LeftFilterSidebarProps> = ({
   const [inStockOnly, setInStockOnly] = React.useState(false);
 
   // URLパラメータから初期値を設定
+  // 注意: sliderMin/sliderMaxは依存配列に含めない（価格範囲の更新を防ぐため）
   React.useEffect(() => {
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
@@ -37,7 +38,7 @@ export const LeftFilterSidebar: React.FC<LeftFilterSidebarProps> = ({
     } else {
       setPriceRange([sliderMin, sliderMax]);
     }
-  }, [searchParams, sliderMin, sliderMax]);
+  }, [searchParams]);
 
   // 価格範囲のリンクを生成
   const generatePriceRanges = () => {

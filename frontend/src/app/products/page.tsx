@@ -26,13 +26,9 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // 商品の価格範囲を計算
-  const minProductPrice = products.length > 0
-    ? Math.min(...products.map(p => p.price))
-    : 0;
-  const maxProductPrice = products.length > 0
-    ? Math.max(...products.map(p => p.price))
-    : 100000;
+  // 初回ロード時の価格範囲を保持（フィルタ前の全商品範囲）
+  const [initialMinPrice, setInitialMinPrice] = useState<number | null>(null);
+  const [initialMaxPrice, setInitialMaxPrice] = useState<number | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -56,6 +52,21 @@ export default function ProductsPage() {
       const response = await productsApi.getAll(filters);
       setProducts(response.products);
       setTotalPages(response.totalPages);
+
+      // 初回ロード時のみ価格範囲を保存（フィルタがかかっていない場合）
+      if (
+        initialMinPrice === null &&
+        !minPriceParam &&
+        !maxPriceParam &&
+        !searchParams.get("search") &&
+        !searchParams.get("category") &&
+        response.products.length > 0
+      ) {
+        const minPrice = Math.min(...response.products.map((p) => p.price));
+        const maxPrice = Math.max(...response.products.map((p) => p.price));
+        setInitialMinPrice(minPrice);
+        setInitialMaxPrice(maxPrice);
+      }
     } catch (error) {
       console.error("Failed to fetch products:", error);
     } finally {
@@ -99,8 +110,8 @@ export default function ProductsPage() {
           }}
         >
           <LeftFilterSidebar
-            minProductPrice={minProductPrice}
-            maxProductPrice={maxProductPrice}
+            minProductPrice={initialMinPrice ?? 0}
+            maxProductPrice={initialMaxPrice ?? 100000}
           />
         </Box>
 
