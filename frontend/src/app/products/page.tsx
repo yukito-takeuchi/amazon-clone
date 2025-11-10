@@ -26,9 +26,13 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // 初回ロード時の価格範囲を保持（フィルタ前の全商品範囲）
-  const [initialMinPrice, setInitialMinPrice] = useState<number | null>(null);
-  const [initialMaxPrice, setInitialMaxPrice] = useState<number | null>(null);
+  // 現在の検索条件における価格範囲（検索・カテゴリ変更時に更新）
+  const [currentMinPrice, setCurrentMinPrice] = useState<number>(0);
+  const [currentMaxPrice, setCurrentMaxPrice] = useState<number>(100000);
+
+  // 前回の検索クエリとカテゴリを保持（変更検知用）
+  const [prevSearch, setPrevSearch] = useState<string | null>(null);
+  const [prevCategory, setPrevCategory] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -39,10 +43,12 @@ export default function ProductsPage() {
     try {
       const minPriceParam = searchParams.get("minPrice");
       const maxPriceParam = searchParams.get("maxPrice");
+      const searchQuery = searchParams.get("search") || null;
+      const categoryId = searchParams.get("category") || null;
 
       const filters = {
-        search: searchParams.get("search") || undefined,
-        categoryId: searchParams.get("category") || undefined,
+        search: searchQuery || undefined,
+        categoryId: categoryId || undefined,
         minPrice: minPriceParam ? parseInt(minPriceParam) : undefined,
         maxPrice: maxPriceParam ? parseInt(maxPriceParam) : undefined,
         page,
@@ -53,19 +59,25 @@ export default function ProductsPage() {
       setProducts(response.products);
       setTotalPages(response.totalPages);
 
-      // 初回ロード時のみ価格範囲を保存（フィルタがかかっていない場合）
-      if (
-        initialMinPrice === null &&
-        !minPriceParam &&
-        !maxPriceParam &&
-        !searchParams.get("search") &&
-        !searchParams.get("category") &&
-        response.products.length > 0
-      ) {
+      // 検索クエリまたはカテゴリが変更された場合のみ価格範囲を更新
+      const searchChanged = searchQuery !== prevSearch;
+      const categoryChanged = categoryId !== prevCategory;
+
+      if ((searchChanged || categoryChanged) && response.products.length > 0) {
         const minPrice = Math.min(...response.products.map((p) => p.price));
         const maxPrice = Math.max(...response.products.map((p) => p.price));
-        setInitialMinPrice(minPrice);
-        setInitialMaxPrice(maxPrice);
+        setCurrentMinPrice(minPrice);
+        setCurrentMaxPrice(maxPrice);
+        setPrevSearch(searchQuery);
+        setPrevCategory(categoryId);
+      } else if (prevSearch === null && prevCategory === null && response.products.length > 0) {
+        // 初回ロード時
+        const minPrice = Math.min(...response.products.map((p) => p.price));
+        const maxPrice = Math.max(...response.products.map((p) => p.price));
+        setCurrentMinPrice(minPrice);
+        setCurrentMaxPrice(maxPrice);
+        setPrevSearch(searchQuery);
+        setPrevCategory(categoryId);
       }
     } catch (error) {
       console.error("Failed to fetch products:", error);
@@ -110,8 +122,8 @@ export default function ProductsPage() {
           }}
         >
           <LeftFilterSidebar
-            minProductPrice={initialMinPrice ?? 0}
-            maxProductPrice={initialMaxPrice ?? 100000}
+            minProductPrice={currentMinPrice}
+            maxProductPrice={currentMaxPrice}
           />
         </Box>
 
