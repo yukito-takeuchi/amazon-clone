@@ -6,13 +6,23 @@ import { Box, Typography, Divider, FormControlLabel, Checkbox, Slider, Button } 
 
 interface LeftFilterSidebarProps {
   onFilterChange?: (filters: any) => void;
+  minProductPrice?: number;
+  maxProductPrice?: number;
 }
 
-export const LeftFilterSidebar: React.FC<LeftFilterSidebarProps> = ({ onFilterChange }) => {
+export const LeftFilterSidebar: React.FC<LeftFilterSidebarProps> = ({
+  onFilterChange,
+  minProductPrice = 0,
+  maxProductPrice = 100000,
+}) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [priceRange, setPriceRange] = React.useState<number[]>([0, 100000]);
+  // スライダーの最小・最大値を商品価格に基づいて設定
+  const sliderMin = Math.floor(minProductPrice / 1000) * 1000;
+  const sliderMax = Math.ceil(maxProductPrice / 1000) * 1000;
+
+  const [priceRange, setPriceRange] = React.useState<number[]>([sliderMin, sliderMax]);
   const [inStockOnly, setInStockOnly] = React.useState(false);
 
   // URLパラメータから初期値を設定
@@ -21,11 +31,51 @@ export const LeftFilterSidebar: React.FC<LeftFilterSidebarProps> = ({ onFilterCh
     const maxPrice = searchParams.get('maxPrice');
     if (minPrice || maxPrice) {
       setPriceRange([
-        minPrice ? parseInt(minPrice) : 0,
-        maxPrice ? parseInt(maxPrice) : 100000,
+        minPrice ? parseInt(minPrice) : sliderMin,
+        maxPrice ? parseInt(maxPrice) : sliderMax,
       ]);
+    } else {
+      setPriceRange([sliderMin, sliderMax]);
     }
-  }, [searchParams]);
+  }, [searchParams, sliderMin, sliderMax]);
+
+  // 価格範囲のリンクを生成
+  const generatePriceRanges = () => {
+    if (minProductPrice === maxProductPrice || maxProductPrice === 0) {
+      return [];
+    }
+
+    const ranges: { label: string; min: number; max?: number }[] = [];
+    const priceGap = maxProductPrice - minProductPrice;
+    const step = Math.ceil(priceGap / 4 / 1000) * 1000; // 4分割して1000円単位に丸める
+
+    let currentMin = Math.floor(minProductPrice / 1000) * 1000;
+
+    // 最初の3つの範囲
+    for (let i = 0; i < 3; i++) {
+      const rangeMax = currentMin + step;
+      if (rangeMax < maxProductPrice) {
+        ranges.push({
+          label: `¥${currentMin.toLocaleString()}～¥${rangeMax.toLocaleString()}`,
+          min: currentMin,
+          max: rangeMax,
+        });
+        currentMin = rangeMax;
+      }
+    }
+
+    // 最後の範囲（〜以上）
+    if (currentMin < maxProductPrice) {
+      ranges.push({
+        label: `¥${currentMin.toLocaleString()}以上`,
+        min: currentMin,
+      });
+    }
+
+    return ranges;
+  };
+
+  const priceRanges = generatePriceRanges();
 
   const handlePriceChange = (_event: Event, newValue: number | number[]) => {
     setPriceRange(newValue as number[]);
@@ -35,14 +85,30 @@ export const LeftFilterSidebar: React.FC<LeftFilterSidebarProps> = ({ onFilterCh
     const params = new URLSearchParams(searchParams.toString());
 
     // 価格範囲がデフォルトでない場合のみパラメータを設定
-    if (priceRange[0] > 0) {
+    if (priceRange[0] > sliderMin) {
       params.set('minPrice', priceRange[0].toString());
     } else {
       params.delete('minPrice');
     }
 
-    if (priceRange[1] < 100000) {
+    if (priceRange[1] < sliderMax) {
       params.set('maxPrice', priceRange[1].toString());
+    } else {
+      params.delete('maxPrice');
+    }
+
+    // ページを1にリセット
+    params.delete('page');
+
+    router.push(`/products?${params.toString()}`);
+  };
+
+  const handlePriceRangeClick = (min: number, max?: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set('minPrice', min.toString());
+    if (max) {
+      params.set('maxPrice', max.toString());
     } else {
       params.delete('maxPrice');
     }
@@ -115,8 +181,8 @@ export const LeftFilterSidebar: React.FC<LeftFilterSidebarProps> = ({ onFilterCh
             value={priceRange}
             onChange={handlePriceChange}
             valueLabelDisplay="auto"
-            min={0}
-            max={100000}
+            min={sliderMin}
+            max={sliderMax}
             step={1000}
             sx={{
               color: '#FF9900',
@@ -162,6 +228,31 @@ export const LeftFilterSidebar: React.FC<LeftFilterSidebarProps> = ({ onFilterCh
           >
             絞り込む
           </Button>
+
+          {/* 価格範囲リンク */}
+          {priceRanges.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                {priceRanges.map((range, index) => (
+                  <Typography
+                    key={index}
+                    onClick={() => handlePriceRangeClick(range.min, range.max)}
+                    sx={{
+                      fontSize: 13,
+                      color: '#0066C0',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        color: '#C45500',
+                        textDecoration: 'underline',
+                      },
+                    }}
+                  >
+                    {range.label}
+                  </Typography>
+                ))}
+              </Box>
+            </Box>
+          )}
         </Box>
       </Box>
 

@@ -31,7 +31,11 @@ export const adminApi = {
   // Categories
   getCategories: async (): Promise<Category[]> => {
     const response = await apiClient.get('/categories');
-    return response.data.categories;
+    return response.data.categories.map((cat: any) => ({
+      id: String(cat.id),
+      name: cat.name,
+      description: cat.description,
+    }));
   },
 
   // Products

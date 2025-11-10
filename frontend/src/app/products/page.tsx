@@ -26,6 +26,14 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  // 商品の価格範囲を計算
+  const minProductPrice = products.length > 0
+    ? Math.min(...products.map(p => p.price))
+    : 0;
+  const maxProductPrice = products.length > 0
+    ? Math.max(...products.map(p => p.price))
+    : 100000;
+
   useEffect(() => {
     fetchProducts();
   }, [page, searchParams]);
@@ -90,7 +98,10 @@ export default function ProductsPage() {
             display: { xs: "none", md: "block" },
           }}
         >
-          <LeftFilterSidebar />
+          <LeftFilterSidebar
+            minProductPrice={minProductPrice}
+            maxProductPrice={maxProductPrice}
+          />
         </Box>
 
         {/* メインコンテンツ */}
