@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,8 @@ import {
   IconButton,
   Badge,
   Button as MuiButton,
+  Popover,
+  Divider,
 } from "@mui/material";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
@@ -27,6 +29,7 @@ export const Header: React.FC = () => {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
   const { cart } = useCartStore();
+  const [accountMenuAnchor, setAccountMenuAnchor] = useState<HTMLElement | null>(null);
 
   // ユーザーの名前（姓名の最初の部分を取得）
   const firstName = user?.name?.split(/[\s　]/)[0] || "";
@@ -39,10 +42,21 @@ export const Header: React.FC = () => {
       await signOut(auth);
       logout();
       router.push("/login");
+      setAccountMenuAnchor(null);
     } catch (error) {
       console.error("Logout error:", error);
     }
   };
+
+  const handleAccountMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAccountMenuAnchor(event.currentTarget);
+  };
+
+  const handleAccountMenuClose = () => {
+    setAccountMenuAnchor(null);
+  };
+
+  const accountMenuOpen = Boolean(accountMenuAnchor);
 
   return (
     <AppBar position="sticky" sx={{ bgcolor: "#131921", boxShadow: "none" }}>
@@ -204,6 +218,7 @@ export const Header: React.FC = () => {
         <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
           {/* アカウント&リスト */}
           <Box
+            onMouseEnter={handleAccountMenuOpen}
             sx={{
               display: "flex",
               flexDirection: "column",
@@ -240,6 +255,379 @@ export const Header: React.FC = () => {
               <ArrowDropDownIcon sx={{ color: "white", fontSize: 20 }} />
             </Box>
           </Box>
+
+          {/* アカウントメニューのPopover */}
+          <Popover
+            open={accountMenuOpen}
+            anchorEl={accountMenuAnchor}
+            onClose={handleAccountMenuClose}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+            slotProps={{
+              paper: {
+                onMouseLeave: handleAccountMenuClose,
+                sx: {
+                  mt: 1,
+                  width: 480,
+                  borderRadius: 1,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                },
+              },
+            }}
+          >
+            <Box sx={{ p: 3 }}>
+              {/* リストセクション */}
+              <Box sx={{ mb: 3 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1.5, color: "#111827" }}>
+                  リスト
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    ほしい物リスト
+                  </Typography>
+                  <Typography sx={{ fontSize: 12, color: "#565959", pl: 2 }}>
+                    読んでよかった本　知見　メインのやつ
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    新しいリストを作成する
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    ギフトアイデア
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    らくらくベビー
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    ショールーム
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    「みんなで応援」プログラム
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Divider />
+
+              {/* アカウントサービスセクション */}
+              <Box sx={{ mt: 3, mb: 3 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1.5, color: "#111827" }}>
+                  アカウントサービス
+                </Typography>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+                  {isAuthenticated && (
+                    <>
+                      <Typography
+                        sx={{
+                          fontSize: 13,
+                          color: "#0066C0",
+                          cursor: "pointer",
+                          "&:hover": { color: "#C45500", textDecoration: "underline" },
+                        }}
+                      >
+                        アカウントの切り替え
+                      </Typography>
+                      <Typography
+                        onClick={handleLogout}
+                        sx={{
+                          fontSize: 13,
+                          color: "#0066C0",
+                          cursor: "pointer",
+                          "&:hover": { color: "#C45500", textDecoration: "underline" },
+                        }}
+                      >
+                        ログアウト
+                      </Typography>
+                    </>
+                  )}
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    アカウントサービス
+                  </Typography>
+                  <Typography
+                    onClick={() => {
+                      router.push("/orders");
+                      handleAccountMenuClose();
+                    }}
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    注文履歴
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    ほしい物リスト
+                  </Typography>
+                  <Typography
+                    onClick={() => {
+                      router.push("/products");
+                      handleAccountMenuClose();
+                    }}
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    ショッピングを続ける
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    おすすめ商品
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    製品安全への取り組み
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    ご利用中の定期おトク便の変更・停止
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Divider />
+
+              {/* メンバーシップおよび購読セクション */}
+              <Box sx={{ mt: 3, mb: 3 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1.5, color: "#111827" }}>
+                  メンバーシップおよび購読
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    Amazonプライム会員情報
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    コンテンツライブラリ
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    デバイス
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    Prime Music
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    ミュージックライブラリにアクセス
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    Amazon Photos
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    ウォッチリスト
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    ビデオの購入とレンタル
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    お客様の Kindle Unlimited
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    マンガ本棚
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    ゲーム&PCソフトダウンロードライブラリ
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    アプリライブラリとデバイスの管理
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Divider />
+
+              {/* ビジネスセクション */}
+              <Box sx={{ mt: 3 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    無料のビジネスアカウント登録をする
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: "#0066C0",
+                      cursor: "pointer",
+                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                    }}
+                  >
+                    Amazonで販売する
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Popover>
 
           {/* 返品もこちら 注文履歴 */}
           <Link href="/orders" style={{ textDecoration: "none" }}>
