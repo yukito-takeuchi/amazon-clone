@@ -1,3 +1,9 @@
+export interface ProductImage {
+  id: number;
+  imageUrl: string;
+  displayOrder: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -6,6 +12,7 @@ export interface Product {
   stock: number;
   categoryId: string;
   imageUrl: string | null;
+  images?: ProductImage[];
   createdAt: string;
   updatedAt: string;
 }

@@ -22,6 +22,7 @@ const transformProduct = (backendProduct: any): Product => ({
   stock: backendProduct.stock,
   categoryId: String(backendProduct.category_id),
   imageUrl: backendProduct.image_url || null,
+  images: backendProduct.images || [],
   isActive: backendProduct.is_active,
   createdAt: backendProduct.created_at,
   updatedAt: backendProduct.updated_at,
@@ -119,5 +120,23 @@ export const adminApi = {
   getAllProducts: async (): Promise<Product[]> => {
     const response = await apiClient.get('/admin/products');
     return response.data.products.map(transformProduct);
+  },
+
+  // Multiple Images
+  uploadProductImages: async (productId: string, images: File[]): Promise<void> => {
+    const formData = new FormData();
+    images.forEach((image) => {
+      formData.append('images', image);
+    });
+
+    await apiClient.post(`/admin/products/${productId}/images`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  deleteProductImage: async (productId: string, imageId: number): Promise<void> => {
+    await apiClient.delete(`/admin/products/${productId}/images/${imageId}`);
   },
 };
