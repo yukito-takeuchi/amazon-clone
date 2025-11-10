@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { ProductModel } from '../models/Product';
 import { CategoryModel } from '../models/Category';
+import { ProductImageModel } from '../models/ProductImage';
 
 /**
  * Get all products with filters
@@ -28,8 +29,23 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
 
     const { products, total } = await ProductModel.findAll(filters);
 
+    // Fetch images for all products
+    const productsWithImages = await Promise.all(
+      products.map(async (product) => {
+        const images = await ProductImageModel.getByProductId(product.id);
+        return {
+          ...product,
+          images: images.map((img) => ({
+            id: img.id,
+            imageUrl: img.image_url,
+            displayOrder: img.display_order,
+          })),
+        };
+      })
+    );
+
     res.json({
-      products,
+      products: productsWithImages,
       pagination: {
         total,
         page: filters.page,
@@ -57,7 +73,19 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    res.json({ product });
+    // Fetch images for the product
+    const images = await ProductImageModel.getByProductId(product.id);
+
+    res.json({
+      product: {
+        ...product,
+        images: images.map((img) => ({
+          id: img.id,
+          imageUrl: img.image_url,
+          displayOrder: img.display_order,
+        })),
+      },
+    });
   } catch (error) {
     console.error('Get product error:', error);
     res.status(500).json({ error: 'Failed to get product' });
