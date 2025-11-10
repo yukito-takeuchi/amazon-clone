@@ -13,6 +13,7 @@ export interface Product {
   categoryId: string;
   imageUrl: string | null;
   images?: ProductImage[];
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }

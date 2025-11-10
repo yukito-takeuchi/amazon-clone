@@ -80,6 +80,31 @@ export default function ProductDetailPage() {
     setDialogOpen(false);
   };
 
+  // Get all product images (including the main imageUrl if exists)
+  const productImages: ProductImage[] = React.useMemo(() => {
+    if (!product) return [];
+
+    if (product.images && product.images.length > 0) {
+      console.log('Product images found:', product.images);
+      return [...product.images];
+    }
+
+    // Fallback: If there's a main imageUrl but no images array, create one from imageUrl
+    if (product.imageUrl) {
+      const mainImageUrl = product.imageUrl.startsWith('http')
+        ? product.imageUrl
+        : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`;
+
+      return [{
+        id: 0,
+        imageUrl: mainImageUrl,
+        displayOrder: 1,
+      }];
+    }
+
+    return [];
+  }, [product, product?.images, product?.imageUrl]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -90,22 +115,6 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return null;
-  }
-
-  // Get all product images (including the main imageUrl if exists)
-  const productImages: ProductImage[] = product.images || [];
-
-  // If there's a main imageUrl but no images array, create one from imageUrl
-  if (product.imageUrl && productImages.length === 0) {
-    const mainImageUrl = product.imageUrl.startsWith('http')
-      ? product.imageUrl
-      : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`;
-
-    productImages.push({
-      id: 0,
-      imageUrl: mainImageUrl,
-      displayOrder: 1,
-    });
   }
 
   return (
