@@ -1,18 +1,56 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Divider, FormControlLabel, Checkbox, Slider } from '@mui/material';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Box, Typography, Divider, FormControlLabel, Checkbox, Slider, Button } from '@mui/material';
 
 interface LeftFilterSidebarProps {
   onFilterChange?: (filters: any) => void;
 }
 
 export const LeftFilterSidebar: React.FC<LeftFilterSidebarProps> = ({ onFilterChange }) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [priceRange, setPriceRange] = React.useState<number[]>([0, 100000]);
   const [inStockOnly, setInStockOnly] = React.useState(false);
 
+  // URLパラメータから初期値を設定
+  React.useEffect(() => {
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    if (minPrice || maxPrice) {
+      setPriceRange([
+        minPrice ? parseInt(minPrice) : 0,
+        maxPrice ? parseInt(maxPrice) : 100000,
+      ]);
+    }
+  }, [searchParams]);
+
   const handlePriceChange = (_event: Event, newValue: number | number[]) => {
     setPriceRange(newValue as number[]);
+  };
+
+  const handlePriceSearch = () => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    // 価格範囲がデフォルトでない場合のみパラメータを設定
+    if (priceRange[0] > 0) {
+      params.set('minPrice', priceRange[0].toString());
+    } else {
+      params.delete('minPrice');
+    }
+
+    if (priceRange[1] < 100000) {
+      params.set('maxPrice', priceRange[1].toString());
+    } else {
+      params.delete('maxPrice');
+    }
+
+    // ページを1にリセット
+    params.delete('page');
+
+    router.push(`/products?${params.toString()}`);
   };
 
   const categories = [
@@ -93,7 +131,7 @@ export const LeftFilterSidebar: React.FC<LeftFilterSidebarProps> = ({ onFilterCh
               },
             }}
           />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, mb: 2 }}>
             <Typography sx={{ fontSize: 12, color: '#6B7280' }}>
               ¥{priceRange[0].toLocaleString()}
             </Typography>
@@ -101,6 +139,29 @@ export const LeftFilterSidebar: React.FC<LeftFilterSidebarProps> = ({ onFilterCh
               ¥{priceRange[1].toLocaleString()}
             </Typography>
           </Box>
+          <Button
+            variant="contained"
+            size="small"
+            fullWidth
+            onClick={handlePriceSearch}
+            sx={{
+              bgcolor: '#FF9900',
+              color: 'white',
+              textTransform: 'none',
+              fontSize: 13,
+              fontWeight: 600,
+              py: 0.75,
+              '&:hover': {
+                bgcolor: '#F08804',
+              },
+              boxShadow: 'none',
+              '&:hover': {
+                boxShadow: 'none',
+              },
+            }}
+          >
+            絞り込む
+          </Button>
         </Box>
       </Box>
 

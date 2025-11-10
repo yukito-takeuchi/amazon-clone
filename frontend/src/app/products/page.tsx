@@ -33,9 +33,14 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
+      const minPriceParam = searchParams.get("minPrice");
+      const maxPriceParam = searchParams.get("maxPrice");
+
       const filters = {
         search: searchParams.get("search") || undefined,
         categoryId: searchParams.get("category") || undefined,
+        minPrice: minPriceParam ? parseInt(minPriceParam) : undefined,
+        maxPrice: maxPriceParam ? parseInt(maxPriceParam) : undefined,
         page,
         limit: 12,
       };
