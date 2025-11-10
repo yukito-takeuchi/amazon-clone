@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Chip } from '@mui/material';
 import { ordersApi } from '@/lib/api/orders';
 import { Order } from '@/types/order';
 import { Button } from '@/components/common/Button';
@@ -16,12 +17,12 @@ const statusLabels: Record<Order['status'], string> = {
   cancelled: 'キャンセル',
 };
 
-const statusColors: Record<Order['status'], string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  processing: 'bg-blue-100 text-blue-800',
-  shipped: 'bg-purple-100 text-purple-800',
-  delivered: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+const statusColors: Record<Order['status'], { bgcolor: string; color: string }> = {
+  pending: { bgcolor: '#FEF3C7', color: '#92400E' },
+  processing: { bgcolor: '#DBEAFE', color: '#1E40AF' },
+  shipped: { bgcolor: '#E9D5FF', color: '#6B21A8' },
+  delivered: { bgcolor: '#DCFCE7', color: '#166534' },
+  cancelled: { bgcolor: '#FEE2E2', color: '#991B1B' },
 };
 
 export default function OrdersPage() {
@@ -81,13 +82,15 @@ export default function OrdersPage() {
                     </p>
                     <p className="text-sm text-gray-600">注文番号: {order.id}</p>
                   </div>
-                  <span
-                    className={`px-3 py-1 rounded text-sm font-semibold ${
-                      statusColors[order.status]
-                    }`}
-                  >
-                    {statusLabels[order.status]}
-                  </span>
+                  <Chip
+                    label={statusLabels[order.status]}
+                    sx={{
+                      bgcolor: statusColors[order.status].bgcolor,
+                      color: statusColors[order.status].color,
+                      fontWeight: 600,
+                      fontSize: 14,
+                    }}
+                  />
                 </div>
 
                 <div className="border-t border-b py-4 mb-4">

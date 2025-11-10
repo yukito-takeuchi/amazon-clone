@@ -11,6 +11,7 @@ import { adminApi, CreateProductData } from '@/lib/api/admin';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { ImageUpload } from './ImageUpload';
+import { useSnackbar } from '@/hooks/useSnackbar';
 
 const productSchema = z.object({
   name: z.string().min(1, '商品名を入力してください'),
@@ -30,6 +31,7 @@ interface ProductFormProps {
 
 export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
   const router = useRouter();
+  const { showSnackbar, SnackbarComponent } = useSnackbar();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -63,7 +65,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
       setCategories(data);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
-      alert('カテゴリの読み込みに失敗しました');
+      showSnackbar('カテゴリの読み込みに失敗しました', 'error');
     }
   };
 
@@ -84,16 +86,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
 
       if (mode === 'create') {
         await adminApi.createProduct(productData);
-        alert('商品を作成しました');
+        showSnackbar('商品を作成しました', 'success');
       } else if (product) {
         await adminApi.updateProduct(product.id, productData);
-        alert('商品を更新しました');
+        showSnackbar('商品を更新しました', 'success');
       }
 
       router.push('/admin/products');
     } catch (error: any) {
       console.error('Failed to save product:', error);
-      alert(error.response?.data?.message || '商品の保存に失敗しました');
+      showSnackbar(error.response?.data?.message || '商品の保存に失敗しました', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -107,20 +109,22 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
     setIsDeleting(true);
     try {
       await adminApi.deleteProduct(product.id);
-      alert('商品を削除しました');
+      showSnackbar('商品を削除しました', 'success');
       router.push('/admin/products');
     } catch (error: any) {
       console.error('Failed to delete product:', error);
-      alert(error.response?.data?.message || '商品の削除に失敗しました');
+      showSnackbar(error.response?.data?.message || '商品の削除に失敗しました', 'error');
     } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* 商品情報 */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+    <>
+      <SnackbarComponent />
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* 商品情報 */}
+        <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">商品情報</h2>
 
         <div className="space-y-4">
@@ -260,5 +264,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
         </Button>
       </div>
     </form>
+    </>
   );
 };

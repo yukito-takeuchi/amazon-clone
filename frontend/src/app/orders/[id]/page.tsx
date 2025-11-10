@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { Chip } from '@mui/material';
 import { ordersApi } from '@/lib/api/orders';
 import { Order } from '@/types/order';
 import { Button } from '@/components/common/Button';
 import { useAuthStore } from '@/store/authStore';
+import { useSnackbar } from '@/hooks/useSnackbar';
 import { FiCheckCircle } from 'react-icons/fi';
 
 const statusLabels: Record<Order['status'], string> = {
@@ -16,12 +18,12 @@ const statusLabels: Record<Order['status'], string> = {
   cancelled: 'キャンセル',
 };
 
-const statusColors: Record<Order['status'], string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  processing: 'bg-blue-100 text-blue-800',
-  shipped: 'bg-purple-100 text-purple-800',
-  delivered: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+const statusColors: Record<Order['status'], { bgcolor: string; color: string }> = {
+  pending: { bgcolor: '#FEF3C7', color: '#92400E' },
+  processing: { bgcolor: '#DBEAFE', color: '#1E40AF' },
+  shipped: { bgcolor: '#E9D5FF', color: '#6B21A8' },
+  delivered: { bgcolor: '#DCFCE7', color: '#166534' },
+  cancelled: { bgcolor: '#FEE2E2', color: '#991B1B' },
 };
 
 export default function OrderDetailPage() {
@@ -29,6 +31,7 @@ export default function OrderDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { isAuthenticated } = useAuthStore();
+  const { showSnackbar, SnackbarComponent } = useSnackbar();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,7 +54,7 @@ export default function OrderDetailPage() {
       setOrder(data);
     } catch (error) {
       console.error('Failed to fetch order:', error);
-      alert('注文の読み込みに失敗しました');
+      showSnackbar('注文の読み込みに失敗しました', 'error');
       router.push('/orders');
     } finally {
       setIsLoading(false);
@@ -72,6 +75,7 @@ export default function OrderDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SnackbarComponent />
       <div className="container mx-auto px-4 py-8">
         {/* Success Message */}
         {showSuccess && (
@@ -114,13 +118,17 @@ export default function OrderDetailPage() {
                   </p>
                   <p className="text-sm text-gray-600">注文番号: {order.id}</p>
                 </div>
-                <span
-                  className={`px-4 py-2 rounded font-semibold ${
-                    statusColors[order.status]
-                  }`}
-                >
-                  {statusLabels[order.status]}
-                </span>
+                <Chip
+                  label={statusLabels[order.status]}
+                  sx={{
+                    bgcolor: statusColors[order.status].bgcolor,
+                    color: statusColors[order.status].color,
+                    fontWeight: 600,
+                    fontSize: 14,
+                    height: 36,
+                    px: 2,
+                  }}
+                />
               </div>
             </div>
 
