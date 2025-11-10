@@ -12,6 +12,7 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { ImageUpload } from './ImageUpload';
 import { useSnackbar } from '@/hooks/useSnackbar';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
 const productSchema = z.object({
   name: z.string().min(1, '商品名を入力してください'),
@@ -32,6 +33,7 @@ interface ProductFormProps {
 export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
   const router = useRouter();
   const { showSnackbar, SnackbarComponent } = useSnackbar();
+  const { showConfirm, ConfirmDialog } = useConfirmDialog();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -101,27 +103,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!product) return;
 
-    if (!confirm('本当にこの商品を削除しますか？')) return;
-
-    setIsDeleting(true);
-    try {
-      await adminApi.deleteProduct(product.id);
-      showSnackbar('商品を削除しました', 'success');
-      router.push('/admin/products');
-    } catch (error: any) {
-      console.error('Failed to delete product:', error);
-      showSnackbar(error.response?.data?.message || '商品の削除に失敗しました', 'error');
-    } finally {
-      setIsDeleting(false);
-    }
+    showConfirm('商品を削除', '本当にこの商品を削除しますか？', async () => {
+      setIsDeleting(true);
+      try {
+        await adminApi.deleteProduct(product.id);
+        showSnackbar('商品を削除しました', 'success');
+        router.push('/admin/products');
+      } catch (error: any) {
+        console.error('Failed to delete product:', error);
+        showSnackbar(error.response?.data?.message || '商品の削除に失敗しました', 'error');
+      } finally {
+        setIsDeleting(false);
+      }
+    });
   };
 
   return (
     <>
       <SnackbarComponent />
+      <ConfirmDialog />
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* 商品情報 */}
         <div className="bg-white rounded-lg shadow-md p-6">

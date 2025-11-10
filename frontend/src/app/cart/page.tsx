@@ -19,12 +19,14 @@ import { Button } from '@/components/common/Button';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { useSnackbar } from '@/hooks/useSnackbar';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
 export default function CartPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const { cart, setCart } = useCartStore();
   const { showSnackbar, SnackbarComponent } = useSnackbar();
+  const { showConfirm, ConfirmDialog } = useConfirmDialog();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -58,17 +60,17 @@ export default function CartPage() {
     }
   };
 
-  const handleRemoveItem = async (itemId: string) => {
-    if (!confirm('この商品をカートから削除しますか？')) return;
-
-    try {
-      const updatedCart = await cartApi.removeItem(itemId);
-      setCart(updatedCart);
-      showSnackbar('商品を削除しました', 'success');
-    } catch (error: any) {
-      console.error('Failed to remove item:', error);
-      showSnackbar(error.response?.data?.message || '商品の削除に失敗しました', 'error');
-    }
+  const handleRemoveItem = (itemId: string) => {
+    showConfirm('商品を削除', 'この商品をカートから削除しますか？', async () => {
+      try {
+        const updatedCart = await cartApi.removeItem(itemId);
+        setCart(updatedCart);
+        showSnackbar('商品を削除しました', 'success');
+      } catch (error: any) {
+        console.error('Failed to remove item:', error);
+        showSnackbar(error.response?.data?.message || '商品の削除に失敗しました', 'error');
+      }
+    });
   };
 
   if (isLoading) {
@@ -104,6 +106,7 @@ export default function CartPage() {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#F9FAFB' }}>
       <SnackbarComponent />
+      <ConfirmDialog />
       <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2, py: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#111827', mb: 4 }}>
           ショッピングカート
@@ -246,7 +249,7 @@ export default function CartPage() {
                 </Card>
               );
             })}
-          </div>
+          </Box>
 
           {/* Order Summary */}
           <Box sx={{ gridColumn: { xs: '1', lg: 'span 1' } }}>
@@ -289,8 +292,8 @@ export default function CartPage() {
               </CardContent>
             </Card>
           </Box>
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }
