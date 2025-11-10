@@ -13,7 +13,6 @@ import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
 import { useSnackbar } from "@/hooks/useSnackbar";
 import { LeftFilterSidebar } from "@/components/products/LeftFilterSidebar";
-import { RightCartSidebar } from "@/components/products/RightCartSidebar";
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -71,14 +70,13 @@ export default function ProductsPage() {
   };
 
   const currentSearch = searchParams.get("search");
-  const hasCart = cart && cart.items.length > 0;
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F3F4F6" }}>
       <SnackbarComponent />
 
       {/* メインレイアウト */}
-      <Box sx={{ display: "flex", pt: "60px" }}>
+      <Box sx={{ display: "flex" }}>
         {/* 左サイドバー - フィルター */}
         <Box
           sx={{
@@ -94,7 +92,6 @@ export default function ProductsPage() {
         <Box
           sx={{
             flex: 1,
-            mr: hasCart ? "5%" : 0,
             px: 3,
             py: 3,
           }}
@@ -183,9 +180,6 @@ export default function ProductsPage() {
             </>
           )}
         </Box>
-
-        {/* 右サイドバー - カート情報 */}
-        {hasCart && <RightCartSidebar />}
       </Box>
     </Box>
   );
