@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { FormControl, InputLabel, Select, MenuItem, FormHelperText } from '@mui/material';
 import { Product, Category } from '@/types/product';
 import { adminApi, CreateProductData } from '@/lib/api/admin';
 import { Button } from '@/components/common/Button';
@@ -180,27 +181,45 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
             )}
           />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              カテゴリ <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register('categoryId')}
-              className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#FF9900] focus:border-transparent ${
-                errors.categoryId ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">カテゴリを選択</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            {errors.categoryId && (
-              <p className="mt-1 text-sm text-red-600">{errors.categoryId.message}</p>
+          <Controller
+            name="categoryId"
+            control={control}
+            render={({ field }) => (
+              <FormControl fullWidth error={!!errors.categoryId}>
+                <InputLabel id="category-label">カテゴリ *</InputLabel>
+                <Select
+                  {...field}
+                  labelId="category-label"
+                  label="カテゴリ *"
+                  sx={{
+                    bgcolor: 'white',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#D1D5DB',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#9CA3AF',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#FF9900',
+                      borderWidth: 2,
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>カテゴリを選択</em>
+                  </MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.categoryId && (
+                  <FormHelperText>{errors.categoryId.message}</FormHelperText>
+                )}
+              </FormControl>
             )}
-          </div>
+          />
         </div>
       </div>
 

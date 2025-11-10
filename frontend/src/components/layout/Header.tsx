@@ -5,11 +5,19 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  IoLocationOutline,
-  IoSearchOutline,
-  IoCartOutline,
-  IoChevronDown
-} from "react-icons/io5";
+  AppBar,
+  Toolbar,
+  Box,
+  Typography,
+  TextField,
+  IconButton,
+  Badge,
+  Button as MuiButton,
+} from "@mui/material";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import SearchIcon from "@mui/icons-material/Search";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
 import { signOut } from "firebase/auth";
@@ -37,16 +45,24 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-[#131921] text-white sticky top-0 z-50">
-      <div className="mx-auto max-w-[1500px] px-4">
-        <div className="flex items-center gap-3 h-[60px]">
-
-          {/* 左セクション */}
-          <div className="flex items-center gap-3">
-            {/* ロゴ */}
-            <Link
-              href="/"
-              className="flex items-center p-2 border border-transparent rounded-sm hover:border-white/30 transition-all"
+    <AppBar position="sticky" sx={{ bgcolor: "#131921", boxShadow: "none" }}>
+      <Toolbar sx={{ gap: 1.5, py: 1, minHeight: "60px !important" }}>
+        {/* 左セクション */}
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+          {/* ロゴ */}
+          <Link href="/" style={{ textDecoration: "none" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                p: 1,
+                border: "1px solid transparent",
+                borderRadius: "2px",
+                transition: "border-color 0.15s",
+                "&:hover": {
+                  borderColor: "rgba(255,255,255,0.3)",
+                },
+              }}
             >
               <Image
                 src="/amazon-com-light.svg"
@@ -56,89 +72,261 @@ export const Header: React.FC = () => {
                 priority
                 className="h-8 w-auto"
               />
-              <span className="text-xs ml-1">.jp</span>
-            </Link>
+              <Typography
+                component="span"
+                sx={{ fontSize: 12, color: "white", ml: 0.5 }}
+              >
+                .jp
+              </Typography>
+            </Box>
+          </Link>
 
-            {/* お届け先 */}
-            <div className="flex items-start gap-1 p-2 cursor-pointer border border-transparent rounded-sm hover:border-white/30 transition-all">
-              <IoLocationOutline className="text-xl mt-0.5" />
-              <div className="flex flex-col">
-                <span className="text-[11px] text-gray-300 leading-tight">お届け先</span>
-                <span className="text-[14px] font-bold leading-tight">日本</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 中央セクション - 検索バー */}
-          <form
-            onSubmit={(e) => e.preventDefault()}
-            className="flex flex-1 max-w-[900px] h-10"
+          {/* お届け先 */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "start",
+              gap: 0.5,
+              p: 1,
+              cursor: "pointer",
+              border: "1px solid transparent",
+              borderRadius: "2px",
+              transition: "border-color 0.15s",
+              "&:hover": {
+                borderColor: "rgba(255,255,255,0.3)",
+              },
+            }}
           >
-            {/* カテゴリドロップダウン */}
-            <button
-              type="button"
-              className="flex items-center gap-1 px-3 bg-[#E6E6E6] text-[#333] text-sm rounded-l hover:bg-[#D5D5D5] transition-colors"
+            <LocationOnIcon sx={{ fontSize: 20, color: "white" }} />
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  color: "#CCCCCC",
+                  lineHeight: 1.2,
+                }}
+              >
+                お届け先
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "white",
+                  lineHeight: 1.2,
+                }}
+              >
+                日本
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* 中央セクション - 検索バー */}
+        <Box
+          component="form"
+          onSubmit={(e) => e.preventDefault()}
+          sx={{
+            display: "flex",
+            flex: 1,
+            maxWidth: 900,
+            height: 40,
+          }}
+        >
+          {/* カテゴリドロップダウン */}
+          <MuiButton
+            variant="contained"
+            sx={{
+              bgcolor: "#E6E6E6",
+              color: "#333",
+              minWidth: 50,
+              borderRadius: "4px 0 0 4px",
+              textTransform: "none",
+              fontSize: 14,
+              boxShadow: "none",
+              "&:hover": {
+                bgcolor: "#D5D5D5",
+                boxShadow: "none",
+              },
+            }}
+            endIcon={<ArrowDropDownIcon />}
+          >
+            すべて
+          </MuiButton>
+
+          {/* 検索入力 */}
+          <TextField
+            variant="outlined"
+            placeholder="検索 Amazon.jp"
+            size="small"
+            sx={{
+              flex: 1,
+              bgcolor: "white",
+              "& .MuiOutlinedInput-root": {
+                height: 40,
+                borderRadius: 0,
+                "& fieldset": {
+                  borderColor: "transparent",
+                },
+                "&:hover fieldset": {
+                  borderColor: "transparent",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#FF9900",
+                  borderWidth: 2,
+                },
+              },
+              "& .MuiOutlinedInput-input": {
+                fontSize: 14,
+                padding: "8px 12px",
+              },
+            }}
+          />
+
+          {/* 検索ボタン */}
+          <IconButton
+            type="submit"
+            sx={{
+              bgcolor: "#FEBD69",
+              borderRadius: "0 4px 4px 0",
+              width: 45,
+              height: 40,
+              "&:hover": {
+                bgcolor: "#F3A847",
+              },
+            }}
+          >
+            <SearchIcon sx={{ color: "#131921", fontSize: 24 }} />
+          </IconButton>
+        </Box>
+
+        {/* 右セクション */}
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+          {/* アカウント&リスト */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              p: 1,
+              cursor: "pointer",
+              border: "1px solid transparent",
+              borderRadius: "2px",
+              transition: "border-color 0.15s",
+              "&:hover": {
+                borderColor: "rgba(255,255,255,0.3)",
+              },
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 11,
+                color: "#CCCCCC",
+                lineHeight: 1.2,
+              }}
             >
-              <span>すべて</span>
-              <IoChevronDown className="text-lg" />
-            </button>
+              {isAuthenticated ? `こんにちは, ${firstName}` : "ログイン"}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "white",
+                  lineHeight: 1.2,
+                }}
+              >
+                アカウント&リスト
+              </Typography>
+              <ArrowDropDownIcon sx={{ color: "white", fontSize: 20 }} />
+            </Box>
+          </Box>
 
-            {/* 検索入力 */}
-            <input
-              type="text"
-              placeholder="検索 Amazon.jp"
-              className="flex-1 px-3 text-sm text-black outline-none focus:ring-2 focus:ring-[#FF9900]"
-            />
-
-            {/* 検索ボタン */}
-            <button
-              type="submit"
-              className="flex items-center justify-center w-11 bg-[#FEBD69] rounded-r hover:bg-[#F3A847] transition-colors"
+          {/* 返品もこちら 注文履歴 */}
+          <Link href="/orders" style={{ textDecoration: "none" }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                p: 1,
+                border: "1px solid transparent",
+                borderRadius: "2px",
+                transition: "border-color 0.15s",
+                "&:hover": {
+                  borderColor: "rgba(255,255,255,0.3)",
+                },
+              }}
             >
-              <IoSearchOutline className="text-2xl text-[#131921]" />
-            </button>
-          </form>
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  color: "#CCCCCC",
+                  lineHeight: 1.2,
+                }}
+              >
+                返品もこちら
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "white",
+                  lineHeight: 1.2,
+                }}
+              >
+                注文履歴
+              </Typography>
+            </Box>
+          </Link>
 
-          {/* 右セクション */}
-          <div className="flex items-center gap-3">
-            {/* アカウント&リスト */}
-            <div className="flex flex-col p-2 cursor-pointer border border-transparent rounded-sm hover:border-white/30 transition-all">
-              <span className="text-[11px] text-gray-300 leading-tight">
-                {isAuthenticated ? `こんにちは, ${firstName}` : "ログイン"}
-              </span>
-              <div className="flex items-center">
-                <span className="text-[14px] font-bold leading-tight">アカウント&リスト</span>
-                <IoChevronDown className="text-base" />
-              </div>
-            </div>
-
-            {/* 返品もこちら 注文履歴 */}
-            <Link
-              href="/orders"
-              className="flex flex-col p-2 border border-transparent rounded-sm hover:border-white/30 transition-all"
+          {/* カート */}
+          <Link href="/cart" style={{ textDecoration: "none" }}>
+            <Box
+              sx={{
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                p: 1,
+                border: "1px solid transparent",
+                borderRadius: "2px",
+                transition: "border-color 0.15s",
+                "&:hover": {
+                  borderColor: "rgba(255,255,255,0.3)",
+                },
+              }}
             >
-              <span className="text-[11px] text-gray-300 leading-tight">返品もこちら</span>
-              <span className="text-[14px] font-bold leading-tight">注文履歴</span>
-            </Link>
-
-            {/* カート */}
-            <Link
-              href="/cart"
-              className="relative flex flex-col items-center p-2 border border-transparent rounded-sm hover:border-white/30 transition-all"
-            >
-              <div className="relative">
-                <IoCartOutline className="text-[28px]" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-[#F08804] text-white text-base font-bold rounded-full">
-                    {cartCount}
-                  </span>
-                )}
-              </div>
-              <span className="text-[14px] font-bold mt-1">カート</span>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </header>
+              <Badge
+                badgeContent={cartCount}
+                sx={{
+                  "& .MuiBadge-badge": {
+                    bgcolor: "#F08804",
+                    color: "white",
+                    fontWeight: 700,
+                    fontSize: 16,
+                    height: 20,
+                    minWidth: 20,
+                    borderRadius: "10px",
+                    top: -4,
+                    right: 4,
+                  },
+                }}
+              >
+                <ShoppingCartIcon sx={{ fontSize: 28, color: "white" }} />
+              </Badge>
+              <Typography
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "white",
+                  mt: 0.5,
+                }}
+              >
+                カート
+              </Typography>
+            </Box>
+          </Link>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 };

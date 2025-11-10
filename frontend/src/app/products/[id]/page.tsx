@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
+import { Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { productsApi } from '@/lib/api/products';
 import { cartApi } from '@/lib/api/cart';
 import { Product } from '@/types/product';
@@ -148,24 +149,35 @@ export default function ProductDetailPage() {
 
               {product.stock > 0 && (
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      数量
-                    </label>
-                    <select
+                  <FormControl size="small" sx={{ minWidth: 120 }}>
+                    <InputLabel id="quantity-label">数量</InputLabel>
+                    <Select
+                      labelId="quantity-label"
+                      label="数量"
                       value={quantity}
                       onChange={(e) => setQuantity(Number(e.target.value))}
-                      className="border border-gray-300 rounded px-3 py-2"
+                      sx={{
+                        bgcolor: 'white',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#D1D5DB',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#9CA3AF',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#FF9900',
+                        },
+                      }}
                     >
                       {Array.from({ length: Math.min(product.stock, 10) }, (_, i) => i + 1).map(
                         (num) => (
-                          <option key={num} value={num}>
+                          <MenuItem key={num} value={num}>
                             {num}
-                          </option>
+                          </MenuItem>
                         )
                       )}
-                    </select>
-                  </div>
+                    </Select>
+                  </FormControl>
 
                   <Button
                     variant="primary"

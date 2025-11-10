@@ -1,11 +1,17 @@
 import React from 'react';
-import clsx from 'clsx';
+import { Button as MuiButton, CircularProgress } from '@mui/material';
+import { SxProps, Theme } from '@mui/material/styles';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   children: React.ReactNode;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
+  className?: string;
+  fullWidth?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -15,60 +21,85 @@ export const Button: React.FC<ButtonProps> = ({
   children,
   className,
   disabled,
-  ...props
+  onClick,
+  type = 'button',
+  fullWidth = false,
 }) => {
-  const baseStyles = 'font-medium rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
-
-  const variants = {
-    primary: 'bg-[#FF9900] hover:bg-[#FA8900] text-white',
-    secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-900',
-    outline: 'border border-gray-300 hover:bg-gray-50 text-gray-700',
+  // Map custom variants to MUI variants and colors
+  const getMuiVariant = (): 'contained' | 'outlined' | 'text' => {
+    if (variant === 'outline') return 'outlined';
+    return 'contained';
   };
 
-  const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+  // Map sizes to MUI sizes
+  const getMuiSize = (): 'small' | 'medium' | 'large' => {
+    if (size === 'sm') return 'small';
+    if (size === 'lg') return 'large';
+    return 'medium';
+  };
+
+  // Custom styling based on variant
+  const getSxProps = (): SxProps<Theme> => {
+    const baseStyles: SxProps<Theme> = {
+      textTransform: 'none',
+      fontWeight: 500,
+      transition: 'all 0.2s',
+    };
+
+    if (variant === 'primary') {
+      return {
+        ...baseStyles,
+        bgcolor: '#FF9900',
+        color: 'white',
+        '&:hover': {
+          bgcolor: '#FA8900',
+        },
+        '&:disabled': {
+          bgcolor: '#FF9900',
+          opacity: 0.5,
+        },
+      };
+    }
+
+    if (variant === 'secondary') {
+      return {
+        ...baseStyles,
+        bgcolor: '#E5E7EB',
+        color: '#111827',
+        '&:hover': {
+          bgcolor: '#D1D5DB',
+        },
+      };
+    }
+
+    if (variant === 'outline') {
+      return {
+        ...baseStyles,
+        borderColor: '#D1D5DB',
+        color: '#374151',
+        '&:hover': {
+          bgcolor: '#F9FAFB',
+          borderColor: '#D1D5DB',
+        },
+      };
+    }
+
+    return baseStyles;
   };
 
   return (
-    <button
-      className={clsx(
-        baseStyles,
-        variants[variant],
-        sizes[size],
-        className
-      )}
+    <MuiButton
+      variant={getMuiVariant()}
+      size={getMuiSize()}
       disabled={disabled || isLoading}
-      {...props}
+      onClick={onClick}
+      type={type}
+      fullWidth={fullWidth}
+      className={className}
+      sx={getSxProps()}
+      startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : null}
     >
-      {isLoading ? (
-        <span className="flex items-center justify-center">
-          <svg
-            className="animate-spin -ml-1 mr-2 h-4 w-4 text-current"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
-          処理中...
-        </span>
-      ) : (
-        children
-      )}
-    </button>
+      {isLoading ? '処理中...' : children}
+    </MuiButton>
   );
 };

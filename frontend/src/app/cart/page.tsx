@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Select, MenuItem, FormControl } from '@mui/material';
 import { cartApi } from '@/lib/api/cart';
 import { Button } from '@/components/common/Button';
 import { useCartStore } from '@/store/cartStore';
@@ -140,25 +141,39 @@ export default function CartPage() {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
                         <label className="text-sm text-gray-600">数量:</label>
-                        <select
-                          value={item.quantity}
-                          onChange={(e) =>
-                            handleUpdateQuantity(
-                              item.id,
-                              Number(e.target.value)
-                            )
-                          }
-                          className="border border-gray-300 rounded px-2 py-1 text-gray-900 bg-white"
-                        >
-                          {Array.from(
-                            { length: Math.min(item.product?.stock || 10, 10) },
-                            (_, i) => i + 1
-                          ).map((num) => (
-                            <option key={num} value={num}>
-                              {num}
-                            </option>
-                          ))}
-                        </select>
+                        <FormControl size="small">
+                          <Select
+                            value={item.quantity}
+                            onChange={(e) =>
+                              handleUpdateQuantity(
+                                item.id,
+                                Number(e.target.value)
+                              )
+                            }
+                            sx={{
+                              minWidth: 70,
+                              bgcolor: 'white',
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#D1D5DB',
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#9CA3AF',
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#FF9900',
+                              },
+                            }}
+                          >
+                            {Array.from(
+                              { length: Math.min(item.product?.stock || 10, 10) },
+                              (_, i) => i + 1
+                            ).map((num) => (
+                              <MenuItem key={num} value={num}>
+                                {num}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
                       </div>
 
                       <button
