@@ -24,6 +24,8 @@ export default function ProductsPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
+    const search = searchParams.get('search') || '';
+    setSearchQuery(search);
     fetchProducts();
   }, [page, searchParams]);
 
@@ -71,9 +73,15 @@ export default function ProductsPage() {
     }
   };
 
+  const currentSearch = searchParams.get('search');
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">
+          {currentSearch ? `"${currentSearch}" の検索結果` : '商品一覧'}
+        </h1>
+
         {/* Search Bar */}
         <div className="mb-8">
           <form onSubmit={handleSearch} className="flex gap-2">

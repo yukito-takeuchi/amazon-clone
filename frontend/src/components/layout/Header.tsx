@@ -30,6 +30,7 @@ export const Header: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { cart } = useCartStore();
   const [accountMenuAnchor, setAccountMenuAnchor] = useState<HTMLElement | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // ユーザーの名前（姓名の最初の部分を取得）
   const firstName = user?.name?.split(/[\s　]/)[0] || "";
@@ -54,6 +55,13 @@ export const Header: React.FC = () => {
 
   const handleAccountMenuClose = () => {
     setAccountMenuAnchor(null);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   const accountMenuOpen = Boolean(accountMenuAnchor);
@@ -139,7 +147,7 @@ export const Header: React.FC = () => {
         {/* 中央セクション - 検索バー */}
         <Box
           component="form"
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={handleSearch}
           sx={{
             display: "flex",
             flex: 1,
@@ -173,6 +181,8 @@ export const Header: React.FC = () => {
             variant="outlined"
             placeholder="検索 Amazon.jp"
             size="small"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             sx={{
               flex: 1,
               bgcolor: "white",
