@@ -24,15 +24,10 @@ export default function ProductsPage() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState(
-    searchParams.get("search") || ""
-  );
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    const search = searchParams.get("search") || "";
-    setSearchQuery(search);
     fetchProducts();
   }, [page, searchParams]);
 
@@ -54,14 +49,6 @@ export default function ProductsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (searchQuery) params.set("search", searchQuery);
-    router.push(`/products?${params.toString()}`);
-    setPage(1);
   };
 
   const handleAddToCart = async (productId: string) => {
@@ -126,22 +113,6 @@ export default function ProductsPage() {
               </Typography>
             )}
           </Box>
-
-          {/* 検索バー */}
-          <Paper sx={{ p: 2, mb: 3 }}>
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <Input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="商品を検索..."
-                className="flex-1"
-              />
-              <Button type="submit" variant="primary">
-                検索
-              </Button>
-            </form>
-          </Paper>
 
           {/* 商品グリッド */}
           {isLoading ? (

@@ -61,6 +61,9 @@ export const Header: React.FC = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      // When empty, navigate to products page without search parameter
+      router.push('/products');
     }
   };
 
