@@ -5,11 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { FormControl, InputLabel, Select, MenuItem, FormHelperText } from '@mui/material';
 import { Product, Category } from '@/types/product';
 import { adminApi, CreateProductData } from '@/lib/api/admin';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { ImageUpload } from './ImageUpload';
+import { useSnackbar } from '@/hooks/useSnackbar';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
 const productSchema = z.object({
   name: z.string().min(1, '商品名を入力してください'),
@@ -29,6 +32,8 @@ interface ProductFormProps {
 
 export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
   const router = useRouter();
+  const { showSnackbar, SnackbarComponent } = useSnackbar();
+  const { showConfirm, ConfirmDialog } = useConfirmDialog();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -62,7 +67,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
       setCategories(data);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
-      alert('カテゴリの読み込みに失敗しました');
+      showSnackbar('カテゴリの読み込みに失敗しました', 'error');
     }
   };
 
@@ -83,43 +88,46 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
 
       if (mode === 'create') {
         await adminApi.createProduct(productData);
-        alert('商品を作成しました');
+        showSnackbar('商品を作成しました', 'success');
       } else if (product) {
         await adminApi.updateProduct(product.id, productData);
-        alert('商品を更新しました');
+        showSnackbar('商品を更新しました', 'success');
       }
 
       router.push('/admin/products');
     } catch (error: any) {
       console.error('Failed to save product:', error);
-      alert(error.response?.data?.message || '商品の保存に失敗しました');
+      showSnackbar(error.response?.data?.message || '商品の保存に失敗しました', 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!product) return;
 
-    if (!confirm('本当にこの商品を削除しますか？')) return;
-
-    setIsDeleting(true);
-    try {
-      await adminApi.deleteProduct(product.id);
-      alert('商品を削除しました');
-      router.push('/admin/products');
-    } catch (error: any) {
-      console.error('Failed to delete product:', error);
-      alert(error.response?.data?.message || '商品の削除に失敗しました');
-    } finally {
-      setIsDeleting(false);
-    }
+    showConfirm('商品を削除', '本当にこの商品を削除しますか？', async () => {
+      setIsDeleting(true);
+      try {
+        await adminApi.deleteProduct(product.id);
+        showSnackbar('商品を削除しました', 'success');
+        router.push('/admin/products');
+      } catch (error: any) {
+        console.error('Failed to delete product:', error);
+        showSnackbar(error.response?.data?.message || '商品の削除に失敗しました', 'error');
+      } finally {
+        setIsDeleting(false);
+      }
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* 商品情報 */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+    <>
+      <SnackbarComponent />
+      <ConfirmDialog />
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* 商品情報 */}
+        <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">商品情報</h2>
 
         <div className="space-y-4">
@@ -180,27 +188,45 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
             )}
           />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              カテゴリ <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register('categoryId')}
-              className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#FF9900] focus:border-transparent ${
-                errors.categoryId ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">カテゴリを選択</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            {errors.categoryId && (
-              <p className="mt-1 text-sm text-red-600">{errors.categoryId.message}</p>
+          <Controller
+            name="categoryId"
+            control={control}
+            render={({ field }) => (
+              <FormControl fullWidth error={!!errors.categoryId}>
+                <InputLabel id="category-label">カテゴリ *</InputLabel>
+                <Select
+                  {...field}
+                  labelId="category-label"
+                  label="カテゴリ *"
+                  sx={{
+                    bgcolor: 'white',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#D1D5DB',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#9CA3AF',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#FF9900',
+                      borderWidth: 2,
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>カテゴリを選択</em>
+                  </MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.categoryId && (
+                  <FormHelperText>{errors.categoryId.message}</FormHelperText>
+                )}
+              </FormControl>
             )}
-          </div>
+          />
         </div>
       </div>
 
@@ -241,5 +267,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
         </Button>
       </div>
     </form>
+    </>
   );
 };

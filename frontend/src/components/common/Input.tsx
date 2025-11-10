@@ -1,33 +1,100 @@
 import React from 'react';
-import clsx from 'clsx';
+import { TextField } from '@mui/material';
+import { SxProps, Theme } from '@mui/material/styles';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps {
   label?: string;
   error?: string;
+  type?: string;
+  placeholder?: string;
+  value?: string;
+  defaultValue?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
+  required?: boolean;
+  className?: string;
+  fullWidth?: boolean;
+  multiline?: boolean;
+  rows?: number;
+  name?: string;
+  id?: string;
+  autoComplete?: string;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className, ...props }, ref) => {
+  (
+    {
+      label,
+      error,
+      type = 'text',
+      placeholder,
+      value,
+      defaultValue,
+      onChange,
+      onBlur,
+      disabled = false,
+      required = false,
+      className,
+      fullWidth = true,
+      multiline = false,
+      rows,
+      name,
+      id,
+      autoComplete,
+    },
+    ref
+  ) => {
+    const getSxProps = (): SxProps<Theme> => ({
+      '& .MuiOutlinedInput-root': {
+        bgcolor: 'white',
+        '& fieldset': {
+          borderColor: '#D1D5DB',
+        },
+        '&:hover fieldset': {
+          borderColor: '#9CA3AF',
+        },
+        '&.Mui-focused fieldset': {
+          borderColor: '#FF9900',
+          borderWidth: 2,
+        },
+      },
+      '& .MuiInputLabel-root': {
+        color: '#374151',
+        '&.Mui-focused': {
+          color: '#FF9900',
+        },
+      },
+      '& .MuiOutlinedInput-input': {
+        color: '#111827',
+      },
+    });
+
     return (
-      <div className="w-full">
-        {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label}
-          </label>
-        )}
-        <input
-          ref={ref}
-          className={clsx(
-            'w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#FF9900] focus:border-transparent text-gray-900 bg-white',
-            error ? 'border-red-500' : 'border-gray-300',
-            className
-          )}
-          {...props}
-        />
-        {error && (
-          <p className="mt-1 text-sm text-red-600">{error}</p>
-        )}
-      </div>
+      <TextField
+        inputRef={ref}
+        label={label}
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        defaultValue={defaultValue}
+        onChange={onChange}
+        onBlur={onBlur}
+        disabled={disabled}
+        required={required}
+        fullWidth={fullWidth}
+        multiline={multiline}
+        rows={rows}
+        name={name}
+        id={id}
+        autoComplete={autoComplete}
+        error={!!error}
+        helperText={error}
+        variant="outlined"
+        size="medium"
+        className={className}
+        sx={getSxProps()}
+      />
     );
   }
 );

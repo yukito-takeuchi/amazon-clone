@@ -3,18 +3,21 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
+import { Select, MenuItem, FormControl, InputLabel, Chip } from '@mui/material';
 import { productsApi } from '@/lib/api/products';
 import { cartApi } from '@/lib/api/cart';
 import { Product } from '@/types/product';
 import { Button } from '@/components/common/Button';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
+import { useSnackbar } from '@/hooks/useSnackbar';
 
 export default function ProductDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { isAuthenticated } = useAuthStore();
   const { setCart } = useCartStore();
+  const { showSnackbar, SnackbarComponent } = useSnackbar();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -34,7 +37,7 @@ export default function ProductDetailPage() {
       setProduct(data);
     } catch (error) {
       console.error('Failed to fetch product:', error);
-      alert('商品の読み込みに失敗しました');
+      showSnackbar('商品の読み込みに失敗しました', 'error');
       router.push('/products');
     } finally {
       setIsLoading(false);
@@ -56,10 +59,10 @@ export default function ProductDetailPage() {
         quantity,
       });
       setCart(updatedCart);
-      alert('カートに追加しました');
+      showSnackbar('カートに追加しました', 'success');
     } catch (error: any) {
       console.error('Failed to add to cart:', error);
-      alert(error.response?.data?.message || 'カートに追加できませんでした');
+      showSnackbar(error.response?.data?.message || 'カートに追加できませんでした', 'error');
     } finally {
       setIsAdding(false);
     }
@@ -89,6 +92,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SnackbarComponent />
       <div className="container mx-auto px-4 py-8">
         <button
           onClick={() => router.back()}
@@ -129,11 +133,27 @@ export default function ProductDetailPage() {
 
               <div className="mb-6">
                 {product.stock > 0 ? (
-                  <div className="text-green-600 font-semibold">
-                    在庫あり（残り{product.stock}個）
-                  </div>
+                  <Chip
+                    label={`在庫あり（残り${product.stock}個）`}
+                    sx={{
+                      bgcolor: '#DCFCE7',
+                      color: '#166534',
+                      fontWeight: 600,
+                      fontSize: 14,
+                      height: 32,
+                    }}
+                  />
                 ) : (
-                  <div className="text-red-600 font-semibold">在庫切れ</div>
+                  <Chip
+                    label="在庫切れ"
+                    sx={{
+                      bgcolor: '#FEE2E2',
+                      color: '#991B1B',
+                      fontWeight: 600,
+                      fontSize: 14,
+                      height: 32,
+                    }}
+                  />
                 )}
               </div>
 
@@ -148,24 +168,35 @@ export default function ProductDetailPage() {
 
               {product.stock > 0 && (
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      数量
-                    </label>
-                    <select
+                  <FormControl size="small" sx={{ minWidth: 120 }}>
+                    <InputLabel id="quantity-label">数量</InputLabel>
+                    <Select
+                      labelId="quantity-label"
+                      label="数量"
                       value={quantity}
                       onChange={(e) => setQuantity(Number(e.target.value))}
-                      className="border border-gray-300 rounded px-3 py-2"
+                      sx={{
+                        bgcolor: 'white',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#D1D5DB',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#9CA3AF',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#FF9900',
+                        },
+                      }}
                     >
                       {Array.from({ length: Math.min(product.stock, 10) }, (_, i) => i + 1).map(
                         (num) => (
-                          <option key={num} value={num}>
+                          <MenuItem key={num} value={num}>
                             {num}
-                          </option>
+                          </MenuItem>
                         )
                       )}
-                    </select>
-                  </div>
+                    </Select>
+                  </FormControl>
 
                   <Button
                     variant="primary"

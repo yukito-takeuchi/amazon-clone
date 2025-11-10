@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Chip } from '@mui/material';
 import { Product } from '@/types/product';
 import { Button } from '@/components/common/Button';
 
@@ -57,9 +58,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
             ¥{product.price.toLocaleString()}
           </span>
           {product.stock > 0 ? (
-            <span className="text-sm text-green-600">在庫あり</span>
+            <Chip
+              label="在庫あり"
+              size="small"
+              sx={{
+                bgcolor: '#DCFCE7',
+                color: '#166534',
+                fontWeight: 600,
+                fontSize: 12,
+              }}
+            />
           ) : (
-            <span className="text-sm text-red-600">在庫切れ</span>
+            <Chip
+              label="在庫切れ"
+              size="small"
+              sx={{
+                bgcolor: '#FEE2E2',
+                color: '#991B1B',
+                fontWeight: 600,
+                fontSize: 12,
+              }}
+            />
           )}
         </div>
 
