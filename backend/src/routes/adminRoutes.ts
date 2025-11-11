@@ -8,7 +8,10 @@ import {
   updateProduct,
   deleteProduct,
   uploadProductImage,
+  uploadProductImages,
+  deleteProductImage,
   uploadMiddleware,
+  uploadMultipleMiddleware,
   createCategory,
 } from '../controllers/adminProductController';
 
@@ -56,10 +59,24 @@ router.delete('/products/:id', deleteProduct);
 
 /**
  * @route   POST /api/admin/products/:id/image
- * @desc    Upload product image
+ * @desc    Upload single product image (backward compatibility)
  * @access  Private/Admin
  */
 router.post('/products/:id/image', uploadMiddleware, uploadProductImage);
+
+/**
+ * @route   POST /api/admin/products/:id/images
+ * @desc    Upload multiple product images
+ * @access  Private/Admin
+ */
+router.post('/products/:id/images', uploadMultipleMiddleware, uploadProductImages);
+
+/**
+ * @route   DELETE /api/admin/products/:productId/images/:imageId
+ * @desc    Delete a specific product image
+ * @access  Private/Admin
+ */
+router.delete('/products/:productId/images/:imageId', deleteProductImage);
 
 /**
  * @route   POST /api/admin/categories

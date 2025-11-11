@@ -3,14 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { Select, MenuItem, FormControl, InputLabel, Chip } from '@mui/material';
+import { Select, MenuItem, FormControl, InputLabel, Chip, Box, Grid } from '@mui/material';
 import { productsApi } from '@/lib/api/products';
 import { cartApi } from '@/lib/api/cart';
-import { Product } from '@/types/product';
+import { Product, ProductImage } from '@/types/product';
 import { Button } from '@/components/common/Button';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { useSnackbar } from '@/hooks/useSnackbar';
+import { ImageGalleryDialog } from '@/components/products/ImageGalleryDialog';
 
 export default function ProductDetailPage() {
   const router = useRouter();
@@ -23,6 +24,8 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     if (params.id) {
@@ -68,6 +71,40 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleImageClick = (index: number) => {
+    setSelectedImageIndex(index);
+    setDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+  };
+
+  // Get all product images (including the main imageUrl if exists)
+  const productImages: ProductImage[] = React.useMemo(() => {
+    if (!product) return [];
+
+    if (product.images && product.images.length > 0) {
+      console.log('Product images found:', product.images);
+      return [...product.images];
+    }
+
+    // Fallback: If there's a main imageUrl but no images array, create one from imageUrl
+    if (product.imageUrl) {
+      const mainImageUrl = product.imageUrl.startsWith('http')
+        ? product.imageUrl
+        : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`;
+
+      return [{
+        id: 0,
+        imageUrl: mainImageUrl,
+        displayOrder: 1,
+      }];
+    }
+
+    return [];
+  }, [product, product?.images, product?.imageUrl]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -80,19 +117,16 @@ export default function ProductDetailPage() {
     return null;
   }
 
-  // Handle imageUrl - backend returns full URL
-  let imageUrl = null;
-  if (product.imageUrl) {
-    if (product.imageUrl.startsWith('http')) {
-      imageUrl = product.imageUrl;
-    } else {
-      imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`;
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <SnackbarComponent />
+      <ImageGalleryDialog
+        images={productImages}
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        initialIndex={selectedImageIndex}
+      />
+
       <div className="container mx-auto px-4 py-8">
         <button
           onClick={() => router.back()}
@@ -103,19 +137,99 @@ export default function ProductDetailPage() {
 
         <div className="bg-white rounded-lg shadow-md p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Product Image */}
-            <div className="relative h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-              {imageUrl ? (
-                <Image
-                  src={imageUrl}
-                  alt={product.name}
-                  fill
-                  className="object-contain p-8"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  unoptimized
-                />
+            {/* Product Images */}
+            <div>
+              {/* メイン画像 */}
+              {productImages.length > 0 ? (
+                <Box
+                  onClick={() => handleImageClick(0)}
+                  sx={{
+                    position: 'relative',
+                    height: 400,
+                    bgcolor: '#F9FAFB',
+                    borderRadius: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    mb: 2,
+                    '&:hover': {
+                      bgcolor: '#F3F4F6',
+                    },
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={productImages[0].imageUrl}
+                    alt={product.name}
+                    sx={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      p: 4,
+                    }}
+                  />
+                </Box>
               ) : (
-                <span className="text-gray-400 text-lg">画像なし</span>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    height: 400,
+                    bgcolor: '#F9FAFB',
+                    borderRadius: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mb: 2,
+                  }}
+                >
+                  <span className="text-gray-400 text-lg">画像なし</span>
+                </Box>
+              )}
+
+              {/* サムネイル一覧 */}
+              {productImages.length > 1 && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 2,
+                    overflowX: 'auto',
+                    pb: 1,
+                  }}
+                >
+                  {productImages.map((image, index) => (
+                    <Box
+                      key={image.id}
+                      onClick={() => handleImageClick(index)}
+                      sx={{
+                        minWidth: 100,
+                        width: 100,
+                        height: 100,
+                        border: '2px solid #E5E7EB',
+                        borderRadius: 1,
+                        cursor: 'pointer',
+                        overflow: 'hidden',
+                        transition: 'all 0.2s',
+                        flexShrink: 0,
+                        '&:hover': {
+                          borderColor: '#FF9900',
+                          transform: 'scale(1.05)',
+                        },
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={image.imageUrl}
+                        alt={`サムネイル ${index + 1}`}
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    </Box>
+                  ))}
+                </Box>
               )}
             </div>
 

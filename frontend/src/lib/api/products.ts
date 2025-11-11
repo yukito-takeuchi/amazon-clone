@@ -17,6 +17,7 @@ const transformProduct = (backendProduct: any): Product => ({
   stock: backendProduct.stock,
   categoryId: String(backendProduct.category_id),
   imageUrl: backendProduct.image_url || null,
+  images: backendProduct.images || [],
   isActive: backendProduct.is_active,
   createdAt: backendProduct.created_at,
   updatedAt: backendProduct.updated_at,

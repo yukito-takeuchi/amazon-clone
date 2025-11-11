@@ -29,7 +29,9 @@ export const Header: React.FC = () => {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
   const { cart } = useCartStore();
-  const [accountMenuAnchor, setAccountMenuAnchor] = useState<HTMLElement | null>(null);
+  const [accountMenuAnchor, setAccountMenuAnchor] =
+    useState<HTMLElement | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // ユーザーの名前（姓名の最初の部分を取得）
   const firstName = user?.name?.split(/[\s　]/)[0] || "";
@@ -54,6 +56,16 @@ export const Header: React.FC = () => {
 
   const handleAccountMenuClose = () => {
     setAccountMenuAnchor(null);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      // When empty, navigate to products page without search parameter
+      router.push("/products");
+    }
   };
 
   const accountMenuOpen = Boolean(accountMenuAnchor);
@@ -139,7 +151,7 @@ export const Header: React.FC = () => {
         {/* 中央セクション - 検索バー */}
         <Box
           component="form"
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={handleSearch}
           sx={{
             display: "flex",
             flex: 1,
@@ -173,6 +185,8 @@ export const Header: React.FC = () => {
             variant="outlined"
             placeholder="検索 Amazon.jp"
             size="small"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             sx={{
               flex: 1,
               bgcolor: "white",
@@ -284,16 +298,28 @@ export const Header: React.FC = () => {
             <Box sx={{ p: 3 }}>
               {/* リストセクション */}
               <Box sx={{ mb: 3 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1.5, color: "#111827" }}>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: 14,
+                    mb: 1.5,
+                    color: "#111827",
+                  }}
+                >
                   リスト
                 </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
                   <Typography
                     sx={{
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     ほしい物リスト
@@ -306,7 +332,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     新しいリストを作成する
@@ -316,7 +345,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     ギフトアイデア
@@ -326,7 +358,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     らくらくベビー
@@ -336,7 +371,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     ショールーム
@@ -346,7 +384,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     「みんなで応援」プログラム
@@ -358,10 +399,23 @@ export const Header: React.FC = () => {
 
               {/* アカウントサービスセクション */}
               <Box sx={{ mt: 3, mb: 3 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1.5, color: "#111827" }}>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: 14,
+                    mb: 1.5,
+                    color: "#111827",
+                  }}
+                >
                   アカウントサービス
                 </Typography>
-                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 1,
+                  }}
+                >
                   {isAuthenticated && (
                     <>
                       <Typography
@@ -369,7 +423,10 @@ export const Header: React.FC = () => {
                           fontSize: 13,
                           color: "#0066C0",
                           cursor: "pointer",
-                          "&:hover": { color: "#C45500", textDecoration: "underline" },
+                          "&:hover": {
+                            color: "#C45500",
+                            textDecoration: "underline",
+                          },
                         }}
                       >
                         アカウントの切り替え
@@ -380,7 +437,10 @@ export const Header: React.FC = () => {
                           fontSize: 13,
                           color: "#0066C0",
                           cursor: "pointer",
-                          "&:hover": { color: "#C45500", textDecoration: "underline" },
+                          "&:hover": {
+                            color: "#C45500",
+                            textDecoration: "underline",
+                          },
                         }}
                       >
                         ログアウト
@@ -392,7 +452,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     アカウントサービス
@@ -406,7 +469,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     注文履歴
@@ -416,7 +482,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     ほしい物リスト
@@ -430,7 +499,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     ショッピングを続ける
@@ -440,7 +512,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     おすすめ商品
@@ -450,7 +525,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     製品安全への取り組み
@@ -460,7 +538,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     ご利用中の定期おトク便の変更・停止
@@ -472,16 +553,28 @@ export const Header: React.FC = () => {
 
               {/* メンバーシップおよび購読セクション */}
               <Box sx={{ mt: 3, mb: 3 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1.5, color: "#111827" }}>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: 14,
+                    mb: 1.5,
+                    color: "#111827",
+                  }}
+                >
                   メンバーシップおよび購読
                 </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}
+                >
                   <Typography
                     sx={{
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     Amazonプライム会員情報
@@ -491,7 +584,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     コンテンツライブラリ
@@ -501,7 +597,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     デバイス
@@ -511,7 +610,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     Prime Music
@@ -521,7 +623,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     ミュージックライブラリにアクセス
@@ -531,7 +636,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     Amazon Photos
@@ -541,7 +649,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     ウォッチリスト
@@ -551,7 +662,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     ビデオの購入とレンタル
@@ -561,7 +675,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     お客様の Kindle Unlimited
@@ -571,7 +688,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     マンガ本棚
@@ -581,7 +701,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     ゲーム&PCソフトダウンロードライブラリ
@@ -591,7 +714,10 @@ export const Header: React.FC = () => {
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     アプリライブラリとデバイスの管理
@@ -603,27 +729,37 @@ export const Header: React.FC = () => {
 
               {/* ビジネスセクション */}
               <Box sx={{ mt: 3 }}>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}
+                >
                   <Typography
                     sx={{
                       fontSize: 13,
                       color: "#0066C0",
                       cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
+                      "&:hover": {
+                        color: "#C45500",
+                        textDecoration: "underline",
+                      },
                     }}
                   >
                     無料のビジネスアカウント登録をする
                   </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: 13,
-                      color: "#0066C0",
-                      cursor: "pointer",
-                      "&:hover": { color: "#C45500", textDecoration: "underline" },
-                    }}
-                  >
-                    Amazonで販売する
-                  </Typography>
+                  <Link href="/admin/products" style={{ textDecoration: "none" }}>
+                    <Typography
+                      sx={{
+                        fontSize: 13,
+                        color: "#0066C0",
+                        cursor: "pointer",
+                        "&:hover": {
+                          color: "#C45500",
+                          textDecoration: "underline",
+                        },
+                      }}
+                    >
+                      Amazonで販売する
+                    </Typography>
+                  </Link>
                 </Box>
               </Box>
             </Box>

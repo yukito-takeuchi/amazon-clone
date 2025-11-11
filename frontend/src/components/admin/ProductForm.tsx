@@ -11,6 +11,7 @@ import { adminApi, CreateProductData } from '@/lib/api/admin';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { ImageUpload } from './ImageUpload';
+import { MultipleImageUpload } from './MultipleImageUpload';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
@@ -40,6 +41,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
   const [imageFile, setImageFile] = useState<File | string | null>(
     product?.imageUrl || null
   );
+  const [newImages, setNewImages] = useState<File[]>([]);
 
   const {
     register,
@@ -86,11 +88,25 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
         productData.image = imageFile;
       }
 
+      let savedProduct: any;
+
       if (mode === 'create') {
-        await adminApi.createProduct(productData);
+        savedProduct = await adminApi.createProduct(productData);
+
+        // Upload multiple images if any
+        if (newImages.length > 0) {
+          await adminApi.uploadProductImages(savedProduct.id, newImages);
+        }
+
         showSnackbar('商品を作成しました', 'success');
       } else if (product) {
-        await adminApi.updateProduct(product.id, productData);
+        savedProduct = await adminApi.updateProduct(product.id, productData);
+
+        // Upload multiple images if any
+        if (newImages.length > 0) {
+          await adminApi.uploadProductImages(product.id, newImages);
+        }
+
         showSnackbar('商品を更新しました', 'success');
       }
 
@@ -101,6 +117,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleImageDelete = async (imageId: number): Promise<void> => {
+    if (!product) return;
+    await adminApi.deleteProductImage(product.id, imageId);
   };
 
   const handleDelete = () => {
@@ -230,9 +251,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
         </div>
       </div>
 
-      {/* 商品画像 */}
+      {/* 商品画像（複数） */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <ImageUpload value={imageFile} onChange={setImageFile} />
+        <MultipleImageUpload
+          existingImages={product?.images || []}
+          onImagesChange={setNewImages}
+          onImageDelete={handleImageDelete}
+          maxImages={10}
+        />
       </div>
 
       {/* アクションボタン */}
