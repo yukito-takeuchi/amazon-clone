@@ -12,10 +12,12 @@ import {
 const router = express.Router();
 
 const addressValidation = [
+  body('fullName').notEmpty().withMessage('Full name is required'),
   body('postalCode').notEmpty().withMessage('Postal code is required'),
   body('prefecture').notEmpty().withMessage('Prefecture is required'),
   body('city').notEmpty().withMessage('City is required'),
-  body('addressLine').notEmpty().withMessage('Address line is required'),
+  body('addressLine1').notEmpty().withMessage('Address line 1 is required'),
+  body('addressLine2').optional(),
   body('phoneNumber').notEmpty().withMessage('Phone number is required'),
   body('isDefault').optional().isBoolean().withMessage('isDefault must be boolean'),
 ];

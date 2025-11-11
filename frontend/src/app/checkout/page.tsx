@@ -7,12 +7,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { cartApi } from '@/lib/api/cart';
 import { addressesApi, CreateAddressData } from '@/lib/api/addresses';
+import { stripeApi } from '@/lib/api/stripe';
 import { ordersApi } from '@/lib/api/orders';
 import { Address } from '@/types/order';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
+import { useSnackbar } from '@/hooks/useSnackbar';
 
 const addressSchema = z.object({
   fullName: z.string().min(1, '名前を入力してください'),
@@ -31,6 +33,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const { cart, setCart } = useCartStore();
+  const { showSnackbar, SnackbarComponent } = useSnackbar();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -93,30 +96,45 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (useStripe: boolean = false) => {
     if (!selectedAddressId) {
-      alert('配送先を選択してください');
+      showSnackbar('配送先を選択してください', 'warning');
       return;
     }
 
     if (!cart || cart.items.length === 0) {
-      alert('カートが空です');
+      showSnackbar('カートが空です', 'warning');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const order = await ordersApi.create({ addressId: selectedAddressId });
+      if (useStripe) {
+        // Stripe Checkout (requires valid API key)
+        const { url } = await stripeApi.createCheckoutSession({
+          addressId: parseInt(selectedAddressId),
+        });
+        window.location.href = url;
+      } else {
+        // Direct order creation (no payment processing)
+        const order = await ordersApi.create({
+          addressId: selectedAddressId,
+          paymentMethod: 'cash_on_delivery',
+        });
 
-      // カートをクリア
-      setCart(null);
+        // Clear cart
+        setCart(null);
 
-      // 注文完了ページへ
-      router.push(`/orders/${order.id}?success=true`);
+        // Redirect to success page
+        showSnackbar('ご注文が完了しました', 'success');
+        router.push(`/orders/${order.id}?success=true`);
+      }
     } catch (error: any) {
       console.error('Failed to place order:', error);
-      alert(error.response?.data?.message || '注文に失敗しました');
-    } finally {
+      showSnackbar(
+        error.response?.data?.error || '注文に失敗しました',
+        'error'
+      );
       setIsSubmitting(false);
     }
   };
@@ -147,8 +165,9 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SnackbarComponent />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">注文手続き</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">お支払い手続き</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Address Selection */}
@@ -331,19 +350,32 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={handlePlaceOrder}
-                isLoading={isSubmitting}
-                disabled={!selectedAddressId || isSubmitting}
-                className="w-full"
-              >
-                注文を確定する
-              </Button>
+              <div className="space-y-3">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={() => handlePlaceOrder(false)}
+                  isLoading={isSubmitting}
+                  disabled={!selectedAddressId || isSubmitting}
+                  className="w-full"
+                >
+                  注文を確定する（代金引換）
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => handlePlaceOrder(true)}
+                  isLoading={isSubmitting}
+                  disabled={!selectedAddressId || isSubmitting}
+                  className="w-full"
+                >
+                  クレジットカード決済（Stripe）
+                </Button>
+              </div>
 
               <p className="text-xs text-gray-600 mt-4 text-center">
-                注文を確定すると、利用規約とプライバシーポリシーに同意したものとみなされます。
+                ※Stripe決済には有効なAPIキーが必要です
               </p>
             </div>
           </div>
