@@ -16,18 +16,30 @@ export const getOrders = async (req: AuthRequest, res: Response): Promise<void> 
 
     const orders = await OrderModel.findByUserId(req.user.id);
 
-    // Format response with shipping addresses
+    // Format response with shipping addresses and items
     const formattedOrders = orders.map((order) => ({
-      ...order,
+      id: order.id,
+      userId: order.user_id,
+      status: order.status,
+      totalAmount: order.total_amount,
+      createdAt: order.created_at,
+      updatedAt: order.updated_at,
       shippingAddress: {
         fullName: order.address_full_name,
         postalCode: order.address_postal_code,
         prefecture: order.address_prefecture,
         city: order.address_city,
-        addressLine: order.address_address_line,
-        building: order.address_building,
+        addressLine1: order.address_address_line,
+        addressLine2: order.address_building,
         phoneNumber: order.address_phone_number,
       },
+      items: order.items.map((item) => ({
+        id: item.id,
+        productId: item.product_id,
+        productName: item.product_name,
+        quantity: item.quantity,
+        price: item.price,
+      })),
     }));
 
     res.json({ orders: formattedOrders });
@@ -56,18 +68,30 @@ export const getOrderById = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    // Format response with shipping address
+    // Format response with shipping address and items
     const formattedOrder = {
-      ...order,
+      id: order.id,
+      userId: order.user_id,
+      status: order.status,
+      totalAmount: order.total_amount,
+      createdAt: order.created_at,
+      updatedAt: order.updated_at,
       shippingAddress: {
         fullName: order.address_full_name,
         postalCode: order.address_postal_code,
         prefecture: order.address_prefecture,
         city: order.address_city,
-        addressLine: order.address_address_line,
-        building: order.address_building,
+        addressLine1: order.address_address_line,
+        addressLine2: order.address_building,
         phoneNumber: order.address_phone_number,
       },
+      items: order.items.map((item) => ({
+        id: item.id,
+        productId: item.product_id,
+        productName: item.product_name,
+        quantity: item.quantity,
+        price: item.price,
+      })),
     };
 
     res.json({ order: formattedOrder });

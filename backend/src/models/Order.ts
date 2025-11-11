@@ -145,10 +145,10 @@ export class OrderModel {
   }
 
   /**
-   * Find all orders for a user
+   * Find all orders for a user with items
    */
-  static async findByUserId(userId: string): Promise<Order[]> {
-    const result = await pool.query(
+  static async findByUserId(userId: string): Promise<OrderWithItems[]> {
+    const ordersResult = await pool.query(
       `SELECT
         o.*,
         a.full_name as address_full_name,
@@ -164,7 +164,30 @@ export class OrderModel {
        ORDER BY o.created_at DESC`,
       [userId]
     );
-    return result.rows;
+
+    // Fetch items for each order
+    const ordersWithItems = await Promise.all(
+      ordersResult.rows.map(async (order) => {
+        const itemsResult = await pool.query(
+          `SELECT
+            oi.*,
+            p.name as product_name,
+            p.image_url as product_image_url
+           FROM order_items oi
+           LEFT JOIN products p ON oi.product_id = p.id
+           WHERE oi.order_id = $1
+           ORDER BY oi.created_at ASC`,
+          [order.id]
+        );
+
+        return {
+          ...order,
+          items: itemsResult.rows,
+        };
+      })
+    );
+
+    return ordersWithItems;
   }
 
   /**
