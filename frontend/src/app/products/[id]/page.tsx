@@ -189,42 +189,47 @@ export default function ProductDetailPage() {
 
               {/* サムネイル一覧 */}
               {productImages.length > 1 && (
-                <Grid container spacing={2}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 2,
+                    overflowX: 'auto',
+                    pb: 1,
+                  }}
+                >
                   {productImages.map((image, index) => (
-                    <Grid item xs={6} sm={4} md={3} key={image.id}>
+                    <Box
+                      key={image.id}
+                      onClick={() => handleImageClick(index)}
+                      sx={{
+                        minWidth: 100,
+                        width: 100,
+                        height: 100,
+                        border: '2px solid #E5E7EB',
+                        borderRadius: 1,
+                        cursor: 'pointer',
+                        overflow: 'hidden',
+                        transition: 'all 0.2s',
+                        flexShrink: 0,
+                        '&:hover': {
+                          borderColor: '#FF9900',
+                          transform: 'scale(1.05)',
+                        },
+                      }}
+                    >
                       <Box
-                        onClick={() => handleImageClick(index)}
+                        component="img"
+                        src={image.imageUrl}
+                        alt={`サムネイル ${index + 1}`}
                         sx={{
-                          position: 'relative',
-                          paddingTop: '100%',
-                          border: '2px solid #E5E7EB',
-                          borderRadius: 1,
-                          cursor: 'pointer',
-                          overflow: 'hidden',
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            borderColor: '#FF9900',
-                            transform: 'scale(1.05)',
-                          },
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
                         }}
-                      >
-                        <Box
-                          component="img"
-                          src={image.imageUrl}
-                          alt={`サムネイル ${index + 1}`}
-                          sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                          }}
-                        />
-                      </Box>
-                    </Grid>
+                      />
+                    </Box>
                   ))}
-                </Grid>
+                </Box>
               )}
             </div>
 
