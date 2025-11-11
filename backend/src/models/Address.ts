@@ -3,6 +3,7 @@ import pool from '../config/database';
 export interface Address {
   id: number;
   user_id: string;
+  full_name: string;
   postal_code: string;
   prefecture: string;
   city: string;
@@ -16,6 +17,7 @@ export interface Address {
 
 export interface CreateAddressData {
   userId: string;
+  fullName: string;
   postalCode: string;
   prefecture: string;
   city: string;
@@ -26,6 +28,7 @@ export interface CreateAddressData {
 }
 
 export interface UpdateAddressData {
+  fullName?: string;
   postalCode?: string;
   prefecture?: string;
   city?: string;
@@ -53,11 +56,12 @@ export class AddressModel {
       }
 
       const result = await client.query(
-        `INSERT INTO addresses (user_id, postal_code, prefecture, city, address_line, building, phone_number, is_default)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO addresses (user_id, full_name, postal_code, prefecture, city, address_line, building, phone_number, is_default)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING *`,
         [
           data.userId,
+          data.fullName,
           data.postalCode,
           data.prefecture,
           data.city,
@@ -119,6 +123,12 @@ export class AddressModel {
       const fields: string[] = [];
       const values: any[] = [];
       let paramCount = 1;
+
+      if (data.fullName !== undefined) {
+        fields.push(`full_name = $${paramCount}`);
+        values.push(data.fullName);
+        paramCount++;
+      }
 
       if (data.postalCode !== undefined) {
         fields.push(`postal_code = $${paramCount}`);
