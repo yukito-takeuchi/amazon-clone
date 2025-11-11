@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { cartApi } from '@/lib/api/cart';
 import { addressesApi, CreateAddressData } from '@/lib/api/addresses';
 import { stripeApi } from '@/lib/api/stripe';
+import { ordersApi } from '@/lib/api/orders';
 import { Address } from '@/types/order';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
@@ -95,7 +96,7 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (useStripe: boolean = false) => {
     if (!selectedAddressId) {
       showSnackbar('配送先を選択してください', 'warning');
       return;
@@ -108,17 +109,30 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
     try {
-      // Create Stripe Checkout Session
-      const { url } = await stripeApi.createCheckoutSession({
-        addressId: parseInt(selectedAddressId),
-      });
+      if (useStripe) {
+        // Stripe Checkout (requires valid API key)
+        const { url } = await stripeApi.createCheckoutSession({
+          addressId: parseInt(selectedAddressId),
+        });
+        window.location.href = url;
+      } else {
+        // Direct order creation (no payment processing)
+        const order = await ordersApi.create({
+          addressId: selectedAddressId,
+          paymentMethod: 'cash_on_delivery',
+        });
 
-      // Redirect to Stripe Checkout
-      window.location.href = url;
+        // Clear cart
+        setCart(null);
+
+        // Redirect to success page
+        showSnackbar('ご注文が完了しました', 'success');
+        router.push(`/orders/${order.id}?success=true`);
+      }
     } catch (error: any) {
-      console.error('Failed to create checkout session:', error);
+      console.error('Failed to place order:', error);
       showSnackbar(
-        error.response?.data?.error || 'チェックアウトに失敗しました',
+        error.response?.data?.error || '注文に失敗しました',
         'error'
       );
       setIsSubmitting(false);
@@ -336,19 +350,32 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={handlePlaceOrder}
-                isLoading={isSubmitting}
-                disabled={!selectedAddressId || isSubmitting}
-                className="w-full"
-              >
-                お支払いへ進む
-              </Button>
+              <div className="space-y-3">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={() => handlePlaceOrder(false)}
+                  isLoading={isSubmitting}
+                  disabled={!selectedAddressId || isSubmitting}
+                  className="w-full"
+                >
+                  注文を確定する（代金引換）
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => handlePlaceOrder(true)}
+                  isLoading={isSubmitting}
+                  disabled={!selectedAddressId || isSubmitting}
+                  className="w-full"
+                >
+                  クレジットカード決済（Stripe）
+                </Button>
+              </div>
 
               <p className="text-xs text-gray-600 mt-4 text-center">
-                Stripeの安全な決済画面に移動します
+                ※Stripe決済には有効なAPIキーが必要です
               </p>
             </div>
           </div>

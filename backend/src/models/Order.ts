@@ -11,6 +11,14 @@ export interface Order {
   payment_method: string;
   created_at: Date;
   updated_at: Date;
+  // Address fields (from JOIN)
+  address_full_name?: string;
+  address_postal_code?: string;
+  address_prefecture?: string;
+  address_city?: string;
+  address_address_line?: string;
+  address_building?: string;
+  address_phone_number?: string;
 }
 
 export interface OrderItem {
@@ -97,7 +105,18 @@ export class OrderModel {
    */
   static async findById(id: number, userId: string): Promise<OrderWithItems | null> {
     const orderResult = await pool.query(
-      'SELECT * FROM orders WHERE id = $1 AND user_id = $2',
+      `SELECT
+        o.*,
+        a.full_name as address_full_name,
+        a.postal_code as address_postal_code,
+        a.prefecture as address_prefecture,
+        a.city as address_city,
+        a.address_line as address_address_line,
+        a.building as address_building,
+        a.phone_number as address_phone_number
+       FROM orders o
+       LEFT JOIN addresses a ON o.address_id = a.id
+       WHERE o.id = $1 AND o.user_id = $2`,
       [id, userId]
     );
 
@@ -130,7 +149,19 @@ export class OrderModel {
    */
   static async findByUserId(userId: string): Promise<Order[]> {
     const result = await pool.query(
-      'SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC',
+      `SELECT
+        o.*,
+        a.full_name as address_full_name,
+        a.postal_code as address_postal_code,
+        a.prefecture as address_prefecture,
+        a.city as address_city,
+        a.address_line as address_address_line,
+        a.building as address_building,
+        a.phone_number as address_phone_number
+       FROM orders o
+       LEFT JOIN addresses a ON o.address_id = a.id
+       WHERE o.user_id = $1
+       ORDER BY o.created_at DESC`,
       [userId]
     );
     return result.rows;

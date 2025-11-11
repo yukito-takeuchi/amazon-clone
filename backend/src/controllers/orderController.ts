@@ -16,7 +16,21 @@ export const getOrders = async (req: AuthRequest, res: Response): Promise<void> 
 
     const orders = await OrderModel.findByUserId(req.user.id);
 
-    res.json({ orders });
+    // Format response with shipping addresses
+    const formattedOrders = orders.map((order) => ({
+      ...order,
+      shippingAddress: {
+        fullName: order.address_full_name,
+        postalCode: order.address_postal_code,
+        prefecture: order.address_prefecture,
+        city: order.address_city,
+        addressLine: order.address_address_line,
+        building: order.address_building,
+        phoneNumber: order.address_phone_number,
+      },
+    }));
+
+    res.json({ orders: formattedOrders });
   } catch (error) {
     console.error('Get orders error:', error);
     res.status(500).json({ error: 'Failed to get orders' });
@@ -42,7 +56,21 @@ export const getOrderById = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    res.json({ order });
+    // Format response with shipping address
+    const formattedOrder = {
+      ...order,
+      shippingAddress: {
+        fullName: order.address_full_name,
+        postalCode: order.address_postal_code,
+        prefecture: order.address_prefecture,
+        city: order.address_city,
+        addressLine: order.address_address_line,
+        building: order.address_building,
+        phoneNumber: order.address_phone_number,
+      },
+    };
+
+    res.json({ order: formattedOrder });
   } catch (error) {
     console.error('Get order error:', error);
     res.status(500).json({ error: 'Failed to get order' });
