@@ -189,9 +189,9 @@ export default function ProductDetailPage() {
 
               {/* サムネイル一覧 */}
               {productImages.length > 1 && (
-                <Grid container spacing={1}>
+                <Grid container spacing={2}>
                   {productImages.map((image, index) => (
-                    <Grid item xs={3} key={image.id}>
+                    <Grid item xs={6} sm={4} md={3} key={image.id}>
                       <Box
                         onClick={() => handleImageClick(index)}
                         sx={{
@@ -201,8 +201,10 @@ export default function ProductDetailPage() {
                           borderRadius: 1,
                           cursor: 'pointer',
                           overflow: 'hidden',
+                          transition: 'all 0.2s',
                           '&:hover': {
                             borderColor: '#FF9900',
+                            transform: 'scale(1.05)',
                           },
                         }}
                       >
