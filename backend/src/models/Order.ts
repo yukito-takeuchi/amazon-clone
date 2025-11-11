@@ -146,4 +146,51 @@ export class OrderModel {
     );
     return result.rows[0] || null;
   }
+
+  /**
+   * Update order with Stripe information
+   */
+  static async updateStripeInfo(
+    id: number,
+    data: { stripeSessionId: string; stripePaymentIntentId: string }
+  ): Promise<Order | null> {
+    const result = await pool.query(
+      'UPDATE orders SET stripe_session_id = $1, stripe_payment_intent_id = $2 WHERE id = $3 RETURNING *',
+      [data.stripeSessionId, data.stripePaymentIntentId, id]
+    );
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Find order by Stripe session ID
+   */
+  static async findByStripeSessionId(sessionId: string): Promise<OrderWithItems | null> {
+    const orderResult = await pool.query(
+      'SELECT * FROM orders WHERE stripe_session_id = $1',
+      [sessionId]
+    );
+
+    if (orderResult.rows.length === 0) {
+      return null;
+    }
+
+    const order = orderResult.rows[0];
+
+    const itemsResult = await pool.query(
+      `SELECT
+        oi.*,
+        p.name as product_name,
+        p.image_url as product_image_url
+       FROM order_items oi
+       LEFT JOIN products p ON oi.product_id = p.id
+       WHERE oi.order_id = $1
+       ORDER BY oi.created_at ASC`,
+      [order.id]
+    );
+
+    return {
+      ...order,
+      items: itemsResult.rows,
+    };
+  }
 }

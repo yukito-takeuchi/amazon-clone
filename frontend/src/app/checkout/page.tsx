@@ -7,12 +7,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { cartApi } from '@/lib/api/cart';
 import { addressesApi, CreateAddressData } from '@/lib/api/addresses';
-import { ordersApi } from '@/lib/api/orders';
+import { stripeApi } from '@/lib/api/stripe';
 import { Address } from '@/types/order';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
+import { useSnackbar } from '@/hooks/useSnackbar';
 
 const addressSchema = z.object({
   fullName: z.string().min(1, '名前を入力してください'),
@@ -31,6 +32,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const { cart, setCart } = useCartStore();
+  const { showSnackbar, SnackbarComponent } = useSnackbar();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -95,28 +97,30 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (!selectedAddressId) {
-      alert('配送先を選択してください');
+      showSnackbar('配送先を選択してください', 'warning');
       return;
     }
 
     if (!cart || cart.items.length === 0) {
-      alert('カートが空です');
+      showSnackbar('カートが空です', 'warning');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const order = await ordersApi.create({ addressId: selectedAddressId });
+      // Create Stripe Checkout Session
+      const { url } = await stripeApi.createCheckoutSession({
+        addressId: parseInt(selectedAddressId),
+      });
 
-      // カートをクリア
-      setCart(null);
-
-      // 注文完了ページへ
-      router.push(`/orders/${order.id}?success=true`);
+      // Redirect to Stripe Checkout
+      window.location.href = url;
     } catch (error: any) {
-      console.error('Failed to place order:', error);
-      alert(error.response?.data?.message || '注文に失敗しました');
-    } finally {
+      console.error('Failed to create checkout session:', error);
+      showSnackbar(
+        error.response?.data?.error || 'チェックアウトに失敗しました',
+        'error'
+      );
       setIsSubmitting(false);
     }
   };
@@ -147,8 +151,9 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SnackbarComponent />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">注文手続き</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">お支払い手続き</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Address Selection */}
@@ -339,11 +344,11 @@ export default function CheckoutPage() {
                 disabled={!selectedAddressId || isSubmitting}
                 className="w-full"
               >
-                注文を確定する
+                お支払いへ進む
               </Button>
 
               <p className="text-xs text-gray-600 mt-4 text-center">
-                注文を確定すると、利用規約とプライバシーポリシーに同意したものとみなされます。
+                Stripeの安全な決済画面に移動します
               </p>
             </div>
           </div>
