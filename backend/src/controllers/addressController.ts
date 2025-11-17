@@ -31,15 +31,16 @@ export const createAddress = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    const { postalCode, prefecture, city, addressLine, building, phoneNumber, isDefault } = req.body;
+    const { fullName, postalCode, prefecture, city, addressLine1, addressLine2, phoneNumber, isDefault } = req.body;
 
     const address = await AddressModel.create({
       userId: req.user.id,
+      fullName,
       postalCode,
       prefecture,
       city,
-      addressLine,
-      building,
+      addressLine: addressLine1,
+      building: addressLine2 || null,
       phoneNumber,
       isDefault,
     });
@@ -65,14 +66,15 @@ export const updateAddress = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     const { id } = req.params;
-    const { postalCode, prefecture, city, addressLine, building, phoneNumber, isDefault } = req.body;
+    const { fullName, postalCode, prefecture, city, addressLine1, addressLine2, phoneNumber, isDefault } = req.body;
 
     const address = await AddressModel.update(parseInt(id), req.user.id, {
+      fullName,
       postalCode,
       prefecture,
       city,
-      addressLine,
-      building,
+      addressLine: addressLine1,
+      building: addressLine2 || null,
       phoneNumber,
       isDefault,
     });

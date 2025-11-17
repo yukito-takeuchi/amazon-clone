@@ -11,7 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 
 const statusLabels: Record<Order['status'], string> = {
   pending: '処理待ち',
-  processing: '処理中',
+  confirmed: '確定済み',
   shipped: '発送済み',
   delivered: '配達完了',
   cancelled: 'キャンセル',
@@ -19,7 +19,7 @@ const statusLabels: Record<Order['status'], string> = {
 
 const statusColors: Record<Order['status'], { bgcolor: string; color: string }> = {
   pending: { bgcolor: '#FEF3C7', color: '#92400E' },
-  processing: { bgcolor: '#DBEAFE', color: '#1E40AF' },
+  confirmed: { bgcolor: '#DBEAFE', color: '#1E40AF' },
   shipped: { bgcolor: '#E9D5FF', color: '#6B21A8' },
   delivered: { bgcolor: '#DCFCE7', color: '#166534' },
   cancelled: { bgcolor: '#FEE2E2', color: '#991B1B' },
@@ -27,17 +27,22 @@ const statusColors: Record<Order['status'], { bgcolor: string; color: string }> 
 
 export default function OrdersPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for auth to complete before redirecting
+    if (authLoading) {
+      return;
+    }
+
     if (!isAuthenticated) {
       router.push('/login');
       return;
     }
     fetchOrders();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authLoading]);
 
   const fetchOrders = async () => {
     setIsLoading(true);
@@ -115,7 +120,7 @@ export default function OrdersPage() {
                         <p className="text-gray-700">
                           {item.productName} × {item.quantity}
                         </p>
-                        <p className="font-semibold">¥{item.subtotal.toLocaleString()}</p>
+                        <p className="font-semibold">¥{(item.price * item.quantity).toLocaleString()}</p>
                       </div>
                     ))}
                   </div>

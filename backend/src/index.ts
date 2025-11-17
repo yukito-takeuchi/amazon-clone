@@ -20,6 +20,7 @@ import productRoutes from './routes/productRoutes';
 import adminRoutes from './routes/adminRoutes';
 import cartRoutes from './routes/cartRoutes';
 import orderRoutes from './routes/orderRoutes';
+import stripeRoutes from './routes/stripeRoutes';
 
 // Import middleware
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -50,6 +51,10 @@ app.use(cors({
   credentials: true,
 }));
 app.use(morgan('dev'));
+
+// Stripe webhook needs raw body, so we apply express.raw() before express.json()
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -75,6 +80,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 // Categories endpoint (public)
 app.get('/api/categories', async (req: Request, res: Response) => {

@@ -23,19 +23,24 @@ import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
 export default function CartPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
   const { cart, setCart } = useCartStore();
   const { showSnackbar, SnackbarComponent } = useSnackbar();
   const { showConfirm, ConfirmDialog } = useConfirmDialog();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for auth to complete before redirecting
+    if (authLoading) {
+      return;
+    }
+
     if (!isAuthenticated) {
       router.push('/login');
       return;
     }
     fetchCart();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authLoading]);
 
   const fetchCart = async () => {
     setIsLoading(true);
