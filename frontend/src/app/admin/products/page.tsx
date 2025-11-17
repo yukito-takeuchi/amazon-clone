@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import {
   Table,
@@ -21,6 +20,7 @@ import { adminApi } from '@/lib/api/admin';
 import { Product } from '@/types/product';
 import { Button } from '@/components/common/Button';
 import { useSnackbar } from '@/hooks/useSnackbar';
+import { ProductDialog } from '@/components/admin/ProductDialog';
 import { FiEdit, FiPlus } from 'react-icons/fi';
 
 export default function AdminProductsPage() {
@@ -29,6 +29,9 @@ export default function AdminProductsPage() {
   const { showSnackbar, SnackbarComponent } = useSnackbar();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+  const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -54,6 +57,27 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleOpenCreateDialog = () => {
+    setDialogMode('create');
+    setSelectedProduct(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleOpenEditDialog = (product: Product) => {
+    setDialogMode('edit');
+    setSelectedProduct(product);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setSelectedProduct(undefined);
+  };
+
+  const handleDialogSuccess = () => {
+    fetchProducts();
+  };
+
   if (authLoading || !user?.isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -70,12 +94,14 @@ export default function AdminProductsPage() {
           <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#111827' }}>
             商品管理
           </Typography>
-          <Link href="/admin/products/new">
-            <Button variant="primary" className="flex items-center gap-2">
-              <FiPlus />
-              商品を追加
-            </Button>
-          </Link>
+          <Button
+            variant="primary"
+            className="flex items-center gap-2"
+            onClick={handleOpenCreateDialog}
+          >
+            <FiPlus />
+            商品を追加
+          </Button>
         </Box>
 
         {isLoading ? (
@@ -206,12 +232,15 @@ export default function AdminProductsPage() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Link href={`/admin/products/${product.id}/edit`}>
-                          <Button variant="outline" size="sm" className="flex items-center gap-1">
-                            <FiEdit />
-                            編集
-                          </Button>
-                        </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-1"
+                          onClick={() => handleOpenEditDialog(product)}
+                        >
+                          <FiEdit />
+                          編集
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -221,6 +250,14 @@ export default function AdminProductsPage() {
           </TableContainer>
         )}
       </Box>
+
+      <ProductDialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        onSuccess={handleDialogSuccess}
+        product={selectedProduct}
+        mode={dialogMode}
+      />
     </Box>
   );
 }
