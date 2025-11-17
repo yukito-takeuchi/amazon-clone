@@ -101,6 +101,7 @@ export default function AdminProductsPage() {
                   <TableCell sx={{ fontWeight: 600, color: '#374151' }}>価格</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: '#374151' }}>在庫</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: '#374151' }}>カテゴリ</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>ステータス</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: '#374151' }}>操作</TableCell>
                 </TableRow>
               </TableHead>
@@ -122,6 +123,8 @@ export default function AdminProductsPage() {
                       sx={{
                         '&:hover': { bgcolor: '#F9FAFB' },
                         '&:last-child td, &:last-child th': { border: 0 },
+                        opacity: product.isActive ? 1 : 0.5,
+                        bgcolor: product.isActive ? 'transparent' : '#FEF2F2',
                       }}
                     >
                       <TableCell>
@@ -190,6 +193,17 @@ export default function AdminProductsPage() {
                         <Typography sx={{ fontSize: 14, color: '#6B7280' }}>
                           {product.categoryId}
                         </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={product.isActive ? '公開中' : '削除済み'}
+                          size="small"
+                          sx={{
+                            bgcolor: product.isActive ? '#DBEAFE' : '#FEE2E2',
+                            color: product.isActive ? '#1E40AF' : '#991B1B',
+                            fontWeight: 600,
+                          }}
+                        />
                       </TableCell>
                       <TableCell>
                         <Link href={`/admin/products/${product.id}/edit`}>
