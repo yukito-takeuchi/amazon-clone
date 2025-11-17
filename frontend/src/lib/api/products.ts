@@ -16,7 +16,7 @@ const transformProduct = (backendProduct: any): Product => ({
   price: parseFloat(backendProduct.price),
   stock: backendProduct.stock,
   categoryId: String(backendProduct.category_id),
-  imageUrl: backendProduct.image_url || null,
+  imageUrl: backendProduct.imageUrl || backendProduct.image_url || null,
   images: backendProduct.images || [],
   isActive: backendProduct.is_active,
   createdAt: backendProduct.created_at,
