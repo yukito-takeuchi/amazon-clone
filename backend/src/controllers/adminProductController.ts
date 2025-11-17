@@ -24,8 +24,26 @@ export const getAllProducts = async (req: AuthRequest, res: Response): Promise<v
 
     const { products, total } = await ProductModel.findAll(filters);
 
+    // Fetch first image for each product
+    const productsWithImages = await Promise.all(
+      products.map(async (product) => {
+        const images = await ProductImageModel.getByProductId(product.id);
+        const firstImage = images.length > 0 ? images[0] : null;
+
+        return {
+          ...product,
+          imageUrl: firstImage?.image_url || product.image_url || null,
+          images: images.map((img: any) => ({
+            id: img.id,
+            url: img.image_url,
+            displayOrder: img.display_order,
+          })),
+        };
+      })
+    );
+
     res.json({
-      products,
+      products: productsWithImages,
       pagination: {
         total,
         page: filters.page,
