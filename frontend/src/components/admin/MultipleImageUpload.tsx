@@ -20,6 +20,7 @@ interface MultipleImageUploadProps {
   existingImages?: ProductImage[];
   newImages: File[];
   onNewImagesChange: (images: File[]) => void;
+  onImageDeleted?: () => void;
   disabled?: boolean;
   maxImages?: number;
 }
@@ -36,6 +37,7 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
   existingImages = [],
   newImages,
   onNewImagesChange,
+  onImageDeleted,
   disabled = false,
   maxImages = 10,
 }) => {
@@ -102,7 +104,11 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
       try {
         const { adminApi } = await import('@/lib/api/admin');
         await adminApi.deleteProductImage(productId, imagePreview.id as number);
-        // 成功したらリロードが必要（親コンポーネントで対応）
+
+        // 削除成功を親コンポーネントに通知
+        if (onImageDeleted) {
+          onImageDeleted();
+        }
       } catch (error) {
         console.error('Failed to delete image:', error);
         alert('画像の削除に失敗しました');
