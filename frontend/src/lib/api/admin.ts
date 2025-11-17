@@ -22,7 +22,13 @@ const transformProduct = (backendProduct: any): Product => ({
   stock: backendProduct.stock,
   categoryId: String(backendProduct.category_id),
   imageUrl: backendProduct.imageUrl || backendProduct.image_url || null,
-  images: backendProduct.images || [],
+  images: backendProduct.images
+    ? backendProduct.images.map((img: any) => ({
+        id: img.id,
+        imageUrl: img.imageUrl || img.url || img.image_url,
+        displayOrder: img.displayOrder || img.display_order || 0,
+      }))
+    : [],
   isActive: backendProduct.is_active,
   createdAt: backendProduct.created_at,
   updatedAt: backendProduct.updated_at,

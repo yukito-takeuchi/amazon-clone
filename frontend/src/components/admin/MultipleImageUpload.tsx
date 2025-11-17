@@ -16,9 +16,11 @@ import CloseIcon from '@mui/icons-material/Close';
 import { ProductImage } from '@/types/product';
 
 interface MultipleImageUploadProps {
+  productId?: string;
   existingImages?: ProductImage[];
-  onImagesChange: (images: File[]) => void;
-  onImageDelete: (imageId: number) => Promise<void>;
+  newImages: File[];
+  onNewImagesChange: (images: File[]) => void;
+  disabled?: boolean;
   maxImages?: number;
 }
 
@@ -30,36 +32,53 @@ interface ImagePreview {
 }
 
 export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
+  productId,
   existingImages = [],
-  onImagesChange,
-  onImageDelete,
+  newImages,
+  onNewImagesChange,
+  disabled = false,
   maxImages = 10,
 }) => {
-  const [images, setImages] = useState<ImagePreview[]>(() => {
-    console.log('MultipleImageUpload - existingImages:', existingImages);
-    return existingImages.map((img) => ({
-      id: img.id,
-      url: img.imageUrl,
-      isExisting: true,
-    }));
-  });
-
-  // Update images when existingImages prop changes
-  React.useEffect(() => {
-    console.log('MultipleImageUpload - existingImages changed:', existingImages);
-    if (existingImages.length > 0) {
-      setImages(existingImages.map((img) => ({
-        id: img.id,
-        url: img.imageUrl,
-        isExisting: true,
-      })));
-    }
-  }, [existingImages]);
-  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [images, setImages] = useState<ImagePreview[]>([]);
   const [deletingIds, setDeletingIds] = useState<Set<number | string>>(new Set());
   const [hoveredId, setHoveredId] = useState<number | string | null>(null);
 
+  // Update images when existingImages or newImages prop changes
+  React.useEffect(() => {
+    console.log('MultipleImageUpload - existingImages changed:', existingImages);
+    console.log('MultipleImageUpload - newImages:', newImages);
+
+    const existingPreviews: ImagePreview[] = existingImages.map((img) => {
+      // img.imageUrl is already a full URL from the backend
+      let imageUrl = img.imageUrl;
+
+      // Only add base URL if it's a relative path
+      if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+        imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}/${imageUrl}`;
+      }
+
+      console.log('Image URL:', imageUrl);
+
+      return {
+        id: img.id,
+        url: imageUrl,
+        isExisting: true,
+      };
+    });
+
+    const newPreviews: ImagePreview[] = newImages.map((file, index) => ({
+      id: `new-${index}`,
+      url: URL.createObjectURL(file),
+      file,
+      isExisting: false,
+    }));
+
+    setImages([...existingPreviews, ...newPreviews]);
+  }, [existingImages, newImages]);
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
+
     const files = Array.from(event.target.files || []);
     const remainingSlots = maxImages - images.length;
 
@@ -68,28 +87,27 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
       return;
     }
 
-    const newPreviews: ImagePreview[] = files.map((file, index) => ({
-      id: `new-${Date.now()}-${index}`,
-      url: URL.createObjectURL(file),
-      file,
-      isExisting: false,
-    }));
-
-    setImages([...images, ...newPreviews]);
-    const updatedFiles = [...newFiles, ...files];
-    setNewFiles(updatedFiles);
-    onImagesChange(updatedFiles);
+    const updatedFiles = [...newImages, ...files];
+    onNewImagesChange(updatedFiles);
 
     event.target.value = '';
   };
 
   const handleDelete = async (imagePreview: ImagePreview) => {
+    if (disabled) return;
+
     if (imagePreview.isExisting) {
       // 既存画像を削除
+      if (!productId) {
+        alert('商品IDが見つかりません');
+        return;
+      }
+
       setDeletingIds(new Set(deletingIds).add(imagePreview.id));
       try {
-        await onImageDelete(imagePreview.id as number);
-        setImages(images.filter((img) => img.id !== imagePreview.id));
+        const { adminApi } = await import('@/lib/api/admin');
+        await adminApi.deleteProductImage(productId, imagePreview.id as number);
+        // 成功したらリロードが必要（親コンポーネントで対応）
       } catch (error) {
         console.error('Failed to delete image:', error);
         alert('画像の削除に失敗しました');
@@ -100,13 +118,9 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
       }
     } else {
       // 新規画像を削除
-      setImages(images.filter((img) => img.id !== imagePreview.id));
-      const updatedFiles = newFiles.filter((_, index) => {
-        const newImageId = `new-${Date.now()}-${index}`;
-        return newImageId !== imagePreview.id;
-      });
-      setNewFiles(updatedFiles);
-      onImagesChange(updatedFiles);
+      const imageIndex = parseInt(imagePreview.id.toString().split('-')[1]);
+      const updatedFiles = newImages.filter((_, index) => index !== imageIndex);
+      onNewImagesChange(updatedFiles);
 
       // ObjectURLを解放
       URL.revokeObjectURL(imagePreview.url);
@@ -177,7 +191,7 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
               <IconButton
                 className="delete-button"
                 onClick={() => handleDelete(image)}
-                disabled={deletingIds.has(image.id)}
+                disabled={disabled || deletingIds.has(image.id)}
                 sx={{
                   position: 'absolute',
                   top: -8,
@@ -267,6 +281,7 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
                 hidden
                 accept="image/*"
                 multiple
+                disabled={disabled}
                 onChange={handleFileSelect}
               />
             </Button>

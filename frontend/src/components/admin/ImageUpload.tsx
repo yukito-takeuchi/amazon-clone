@@ -7,17 +7,23 @@ import { FiUpload, FiX } from 'react-icons/fi';
 interface ImageUploadProps {
   value?: File | string | null;
   onChange: (file: File | null) => void;
+  disabled?: boolean;
   error?: string;
 }
 
-export const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error }) => {
+export const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, disabled = false, error }) => {
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (typeof value === 'string' && value) {
       // 既存の画像URL
-      setPreview(`${process.env.NEXT_PUBLIC_IMAGE_URL}/${value}`);
+      // Check if it's already a full URL
+      if (value.startsWith('http://') || value.startsWith('https://')) {
+        setPreview(value);
+      } else {
+        setPreview(`${process.env.NEXT_PUBLIC_IMAGE_URL}/${value}`);
+      }
     } else if (value instanceof File) {
       // 新しくアップロードされたファイル
       const reader = new FileReader();
@@ -31,6 +37,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error
   }, [value]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -50,6 +57,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error
   };
 
   const handleRemove = () => {
+    if (disabled) return;
     onChange(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -57,6 +65,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error
   };
 
   const handleClick = () => {
+    if (disabled) return;
     fileInputRef.current?.click();
   };
 
@@ -76,7 +85,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error
           <button
             type="button"
             onClick={handleRemove}
-            className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition"
+            disabled={disabled}
+            className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FiX />
           </button>
@@ -85,7 +95,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, error
         <button
           type="button"
           onClick={handleClick}
-          className="w-full h-64 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition flex flex-col items-center justify-center bg-gray-50"
+          disabled={disabled}
+          className="w-full h-64 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition flex flex-col items-center justify-center bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <FiUpload className="text-4xl text-gray-400 mb-2" />
           <span className="text-sm text-gray-600">画像をアップロード</span>
