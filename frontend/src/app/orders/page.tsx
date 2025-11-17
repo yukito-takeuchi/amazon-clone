@@ -27,17 +27,22 @@ const statusColors: Record<Order['status'], { bgcolor: string; color: string }> 
 
 export default function OrdersPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for auth to complete before redirecting
+    if (authLoading) {
+      return;
+    }
+
     if (!isAuthenticated) {
       router.push('/login');
       return;
     }
     fetchOrders();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authLoading]);
 
   const fetchOrders = async () => {
     setIsLoading(true);

@@ -31,7 +31,7 @@ type AddressFormData = z.infer<typeof addressSchema>;
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
   const { cart, setCart } = useCartStore();
   const { showSnackbar, SnackbarComponent } = useSnackbar();
 
@@ -51,12 +51,17 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
+    // Wait for auth to complete before redirecting
+    if (authLoading) {
+      return;
+    }
+
     if (!isAuthenticated) {
       router.push('/login');
       return;
     }
     fetchData();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authLoading]);
 
   const fetchData = async () => {
     setIsLoading(true);

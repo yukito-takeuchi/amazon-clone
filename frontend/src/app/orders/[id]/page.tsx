@@ -12,7 +12,7 @@ import { FiCheckCircle } from 'react-icons/fi';
 
 const statusLabels: Record<Order['status'], string> = {
   pending: '処理待ち',
-  processing: '処理中',
+  confirmed: '確定済み',
   shipped: '発送済み',
   delivered: '配達完了',
   cancelled: 'キャンセル',
@@ -20,7 +20,7 @@ const statusLabels: Record<Order['status'], string> = {
 
 const statusColors: Record<Order['status'], { bgcolor: string; color: string }> = {
   pending: { bgcolor: '#FEF3C7', color: '#92400E' },
-  processing: { bgcolor: '#DBEAFE', color: '#1E40AF' },
+  confirmed: { bgcolor: '#DBEAFE', color: '#1E40AF' },
   shipped: { bgcolor: '#E9D5FF', color: '#6B21A8' },
   delivered: { bgcolor: '#DCFCE7', color: '#166534' },
   cancelled: { bgcolor: '#FEE2E2', color: '#991B1B' },
@@ -30,7 +30,7 @@ export default function OrderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
   const { showSnackbar, SnackbarComponent } = useSnackbar();
 
   const [order, setOrder] = useState<Order | null>(null);
@@ -38,6 +38,11 @@ export default function OrderDetailPage() {
   const showSuccess = searchParams.get('success') === 'true';
 
   useEffect(() => {
+    // Wait for auth to complete before redirecting
+    if (authLoading) {
+      return;
+    }
+
     if (!isAuthenticated) {
       router.push('/login');
       return;
@@ -45,7 +50,7 @@ export default function OrderDetailPage() {
     if (params.id) {
       fetchOrder(params.id as string);
     }
-  }, [isAuthenticated, params.id]);
+  }, [isAuthenticated, authLoading, params.id]);
 
   const fetchOrder = async (id: string) => {
     setIsLoading(true);
