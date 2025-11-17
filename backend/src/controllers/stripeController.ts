@@ -230,3 +230,118 @@ async function handleCheckoutSessionCompleted(
 
   console.log('Order created successfully:', order.id);
 }
+
+/**
+ * Confirm Stripe payment and create order
+ * This is called from the frontend after successful checkout
+ */
+export const confirmPayment = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
+
+    const { sessionId } = req.body;
+
+    if (!sessionId) {
+      res.status(400).json({ error: 'Session ID is required' });
+      return;
+    }
+
+    // Verify the session with Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (session.payment_status !== 'paid') {
+      res.status(400).json({ error: 'Payment not completed' });
+      return;
+    }
+
+    // Check if order already exists for this session
+    const existingOrder = await OrderModel.findByStripeSessionId(sessionId);
+    if (existingOrder) {
+      res.json({ order: existingOrder });
+      return;
+    }
+
+    // Get user ID and address ID from session metadata
+    const userId = session.metadata?.userId || req.user.id;
+    const addressId = session.metadata?.addressId;
+
+    if (!addressId) {
+      res.status(400).json({ error: 'Address ID not found in session' });
+      return;
+    }
+
+    // Get cart with items
+    const cart = await CartModel.getCartWithItems(userId);
+
+    if (!cart || cart.items.length === 0) {
+      res.status(400).json({ error: 'Cart is empty' });
+      return;
+    }
+
+    // Calculate total and prepare order items
+    let totalAmount = 0;
+    const orderItems = [];
+
+    for (const item of cart.items) {
+      const product = await ProductModel.findById(item.product_id);
+
+      if (!product) {
+        console.error('Product not found:', item.product_id);
+        continue;
+      }
+
+      const itemTotal = product.price * item.quantity;
+      totalAmount += itemTotal;
+
+      orderItems.push({
+        productId: product.id,
+        quantity: item.quantity,
+        price: product.price,
+      });
+    }
+
+    // Create order
+    const order = await OrderModel.create({
+      userId,
+      addressId: parseInt(addressId),
+      items: orderItems,
+      totalAmount,
+      paymentMethod: 'stripe',
+    });
+
+    // Update order with Stripe information
+    await OrderModel.updateStripeInfo(order.id, {
+      stripeSessionId: session.id,
+      stripePaymentIntentId: session.payment_intent as string,
+    });
+
+    // Update order status to confirmed
+    await OrderModel.updateStatus(order.id, 'confirmed');
+
+    // Clear cart
+    await CartModel.clearCart(userId);
+
+    console.log('Order created successfully from confirmation:', order.id);
+
+    res.json({
+      message: 'Order created successfully',
+      order: {
+        id: order.id,
+        totalAmount: order.total_amount,
+        status: 'confirmed',
+      },
+    });
+  } catch (error: any) {
+    console.error('Confirm payment error:', {
+      message: error.message,
+      type: error.type,
+      statusCode: error.statusCode,
+    });
+    res.status(500).json({
+      error: error.message || 'Failed to confirm payment',
+    });
+  }
+}
