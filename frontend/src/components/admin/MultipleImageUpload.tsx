@@ -45,9 +45,6 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
 
   // Update images when existingImages or newImages prop changes
   React.useEffect(() => {
-    console.log('MultipleImageUpload - existingImages changed:', existingImages);
-    console.log('MultipleImageUpload - newImages:', newImages);
-
     const existingPreviews: ImagePreview[] = existingImages.map((img) => {
       // img.imageUrl is already a full URL from the backend
       let imageUrl = img.imageUrl;
@@ -56,8 +53,6 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
       if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
         imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}/${imageUrl}`;
       }
-
-      console.log('Image URL:', imageUrl);
 
       return {
         id: img.id,
@@ -73,9 +68,7 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
       isExisting: false,
     }));
 
-    const combinedImages = [...existingPreviews, ...newPreviews];
-    console.log('MultipleImageUpload - combinedImages:', combinedImages);
-    setImages(combinedImages);
+    setImages([...existingPreviews, ...newPreviews]);
   }, [existingImages, newImages]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,9 +124,6 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
 
   const remainingSlots = maxImages - images.length;
 
-  console.log('MultipleImageUpload - Rendering with images:', images);
-  console.log('MultipleImageUpload - images.length:', images.length);
-
   return (
     <Box>
       <Typography
@@ -143,16 +133,18 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
         商品画像 ({images.length}/{maxImages})
       </Typography>
 
-      <Grid container spacing={2}>
-        {images.map((image, index) => {
-          console.log(`Rendering Image ${index + 1}:`, image);
-          return (
-          <Grid item xs={6} sm={4} md={3} key={image.id}>
+      <Grid container spacing={3}>
+        {images.map((image, index) => (
+          <Grid item xs={12} sm={6} md={4} key={image.id}>
             <Card
               sx={{
                 position: 'relative',
                 paddingTop: '100%',
                 overflow: 'visible',
+                boxShadow: 2,
+                '&:hover': {
+                  boxShadow: 4,
+                },
                 '&:hover .delete-button': {
                   opacity: 1,
                 },
@@ -178,15 +170,17 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
               <Box
                 sx={{
                   position: 'absolute',
-                  bottom: 8,
-                  left: 8,
-                  bgcolor: 'rgba(0, 0, 0, 0.7)',
+                  bottom: 12,
+                  left: 12,
+                  bgcolor: 'rgba(0, 0, 0, 0.8)',
                   color: 'white',
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: 1,
-                  fontSize: 12,
-                  fontWeight: 600,
+                  px: 1.5,
+                  py: 0.75,
+                  borderRadius: 1.5,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  minWidth: 32,
+                  textAlign: 'center',
                 }}
               >
                 {index + 1}
@@ -199,23 +193,25 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
                 disabled={disabled || deletingIds.has(image.id)}
                 sx={{
                   position: 'absolute',
-                  top: -8,
-                  right: -8,
+                  top: -12,
+                  right: -12,
                   bgcolor: 'error.main',
                   color: 'white',
                   opacity: hoveredId === image.id ? 1 : 0,
-                  transition: 'opacity 0.2s',
+                  transition: 'all 0.2s',
                   '&:hover': {
                     bgcolor: 'error.dark',
+                    transform: 'scale(1.1)',
                   },
-                  width: 32,
-                  height: 32,
+                  width: 40,
+                  height: 40,
+                  boxShadow: 3,
                 }}
               >
                 {deletingIds.has(image.id) ? (
-                  <CircularProgress size={16} sx={{ color: 'white' }} />
+                  <CircularProgress size={20} sx={{ color: 'white' }} />
                 ) : (
-                  <CloseIcon sx={{ fontSize: 18 }} />
+                  <CloseIcon sx={{ fontSize: 22 }} />
                 )}
               </IconButton>
 
@@ -224,15 +220,16 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
                 <Box
                   sx={{
                     position: 'absolute',
-                    top: 8,
-                    left: 8,
+                    top: 12,
+                    left: 12,
                     bgcolor: '#FF9900',
                     color: 'white',
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 1,
-                    fontSize: 11,
-                    fontWeight: 600,
+                    px: 1.5,
+                    py: 0.75,
+                    borderRadius: 1.5,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    boxShadow: 2,
                   }}
                 >
                   新規
@@ -240,25 +237,26 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
               )}
             </Card>
           </Grid>
-          );
-        })}
+        ))}
 
         {/* 画像追加ボタン */}
         {remainingSlots > 0 && (
-          <Grid item xs={6} sm={4} md={3}>
+          <Grid item xs={12} sm={6} md={4}>
             <Button
               component="label"
               sx={{
                 width: '100%',
                 paddingTop: '100%',
                 position: 'relative',
-                border: '2px dashed #D1D5DB',
-                borderRadius: 1,
+                border: '3px dashed #D1D5DB',
+                borderRadius: 2,
                 bgcolor: '#F9FAFB',
                 cursor: 'pointer',
+                transition: 'all 0.2s',
                 '&:hover': {
                   bgcolor: '#F3F4F6',
                   borderColor: '#FF9900',
+                  transform: 'scale(1.02)',
                 },
               }}
             >
@@ -272,12 +270,12 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
                 }}
               >
                 <AddPhotoAlternateIcon
-                  sx={{ fontSize: 48, color: '#9CA3AF', mb: 1 }}
+                  sx={{ fontSize: 64, color: '#9CA3AF', mb: 2 }}
                 />
-                <Typography sx={{ fontSize: 12, color: '#6B7280' }}>
+                <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#6B7280' }}>
                   画像を追加
                 </Typography>
-                <Typography sx={{ fontSize: 11, color: '#9CA3AF', mt: 0.5 }}>
+                <Typography sx={{ fontSize: 12, color: '#9CA3AF', mt: 1 }}>
                   残り {remainingSlots} 枚
                 </Typography>
               </Box>
