@@ -106,6 +106,8 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
       fetchCategories();
       // Reset form when dialog opens
       if (product) {
+        console.log('ProductDialog - product:', product);
+        console.log('ProductDialog - product.images:', product.images);
         reset({
           name: product.name,
           description: product.description,

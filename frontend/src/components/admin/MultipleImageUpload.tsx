@@ -73,7 +73,9 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
       isExisting: false,
     }));
 
-    setImages([...existingPreviews, ...newPreviews]);
+    const combinedImages = [...existingPreviews, ...newPreviews];
+    console.log('MultipleImageUpload - combinedImages:', combinedImages);
+    setImages(combinedImages);
   }, [existingImages, newImages]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,6 +131,9 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
 
   const remainingSlots = maxImages - images.length;
 
+  console.log('MultipleImageUpload - Rendering with images:', images);
+  console.log('MultipleImageUpload - images.length:', images.length);
+
   return (
     <Box>
       <Typography
@@ -140,7 +145,7 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
 
       <Grid container spacing={2}>
         {images.map((image, index) => {
-          console.log(`Image ${index + 1}:`, image);
+          console.log(`Rendering Image ${index + 1}:`, image);
           return (
           <Grid item xs={6} sm={4} md={3} key={image.id}>
             <Card
