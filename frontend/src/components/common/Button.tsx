@@ -12,6 +12,7 @@ interface ButtonProps {
   type?: 'button' | 'submit' | 'reset';
   className?: string;
   fullWidth?: boolean;
+  form?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -24,6 +25,7 @@ export const Button: React.FC<ButtonProps> = ({
   onClick,
   type = 'button',
   fullWidth = false,
+  form,
 }) => {
   // Map custom variants to MUI variants and colors
   const getMuiVariant = (): 'contained' | 'outlined' | 'text' => {
@@ -96,6 +98,7 @@ export const Button: React.FC<ButtonProps> = ({
       type={type}
       fullWidth={fullWidth}
       className={className}
+      form={form}
       sx={getSxProps()}
       startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : null}
     >

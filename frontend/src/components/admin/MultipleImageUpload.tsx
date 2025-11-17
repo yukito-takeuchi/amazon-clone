@@ -154,9 +154,9 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
               onMouseEnter={() => setHoveredId(image.id)}
               onMouseLeave={() => setHoveredId(null)}
             >
-              <CardMedia
+              <Box
                 component="img"
-                image={image.url}
+                src={image.url}
                 alt={`画像 ${index + 1}`}
                 sx={{
                   position: 'absolute',
