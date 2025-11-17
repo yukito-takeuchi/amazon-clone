@@ -91,9 +91,19 @@ export const createCheckoutSession = async (
       sessionId: session.id,
       url: session.url,
     });
-  } catch (error) {
-    console.error('Create checkout session error:', error);
-    res.status(500).json({ error: 'Failed to create checkout session' });
+  } catch (error: any) {
+    console.error('Create checkout session error:', {
+      message: error.message,
+      type: error.type,
+      statusCode: error.statusCode,
+      requestId: error.requestId,
+      param: error.param,
+      raw: error.raw,
+    });
+    res.status(500).json({
+      error: error.message || 'Failed to create checkout session',
+      requestId: error.requestId,
+    });
   }
 };
 
