@@ -24,7 +24,7 @@ export interface OrderItem {
 export interface Order {
   id: string;
   userId: string;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   totalAmount: number;
   shippingAddress: Address;
   items: OrderItem[];
