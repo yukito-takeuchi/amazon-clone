@@ -205,7 +205,7 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
       <Dialog
         open={open}
         onClose={handleClose}
-        maxWidth="lg"
+        maxWidth="xl"
         fullWidth
         PaperProps={{
           sx: { minHeight: '85vh', maxHeight: '90vh' },
@@ -244,6 +244,8 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
           sx={{
             overflowY: 'auto',
             minHeight: '500px',
+            px: 4,
+            py: 3,
           }}
         >
           <form onSubmit={handleSubmit(onSubmit)} id="product-form">

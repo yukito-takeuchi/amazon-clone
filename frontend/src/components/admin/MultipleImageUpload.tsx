@@ -135,12 +135,13 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
 
       <Grid container spacing={3}>
         {images.map((image, index) => (
-          <Grid item xs={12} sm={6} md={4} key={image.id}>
+          <Grid item xs={12} sm={6} md={4} lg={3} key={image.id}>
             <Card
               sx={{
                 position: 'relative',
-                paddingTop: '100%',
-                minHeight: '200px',
+                width: '100%',
+                minWidth: '250px',
+                height: '300px',
                 overflow: 'visible',
                 boxShadow: 2,
                 borderRadius: 2,
@@ -158,6 +159,13 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
                 component="img"
                 src={image.url}
                 alt={`画像 ${index + 1}`}
+                onError={(e) => {
+                  console.error('Image load error:', image.url);
+                  console.error('Error event:', e);
+                }}
+                onLoad={() => {
+                  console.log('Image loaded successfully:', image.url);
+                }}
                 sx={{
                   position: 'absolute',
                   top: 0,
@@ -165,6 +173,7 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
+                  backgroundColor: '#f0f0f0',
                 }}
               />
 
@@ -243,19 +252,22 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
 
         {/* 画像追加ボタン */}
         {remainingSlots > 0 && (
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
             <Button
               component="label"
               sx={{
                 width: '100%',
-                paddingTop: '100%',
-                minHeight: '200px',
+                minWidth: '250px',
+                height: '300px',
                 position: 'relative',
                 border: '3px dashed #D1D5DB',
                 borderRadius: 2,
                 bgcolor: '#F9FAFB',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 '&:hover': {
                   bgcolor: '#F3F4F6',
                   borderColor: '#FF9900',
