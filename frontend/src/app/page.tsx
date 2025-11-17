@@ -1,113 +1,151 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useEffect, useState } from 'react';
+import { Box, Container, Typography, Paper, Alert } from '@mui/material';
+import { productsApi } from '@/lib/api/products';
+import { Product } from '@/types/product';
+import { ProductSection } from '@/components/home/ProductSection';
+
+export default function HomePage() {
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    try {
+      const response = await productsApi.getAll({ limit: 20 });
+      setAllProducts(response.products);
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 商品をランダムにシャッフル
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  // 各セクション用の商品を準備
+  const recommendedProducts = shuffleArray(allProducts).slice(0, 8);
+  const todaysDeals = [...allProducts]
+    .sort((a, b) => a.price - b.price)
+    .slice(0, 8);
+  const newArrivals = [...allProducts]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 8);
+  const popularProducts = shuffleArray(allProducts).slice(0, 8);
+
+  if (isLoading) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ textAlign: 'center', py: 10 }}>
+          <Typography variant="h6" color="text.secondary">
+            読み込み中...
+          </Typography>
+        </Box>
+      </Container>
+    );
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <Box sx={{ bgcolor: '#EAEDED', minHeight: 'calc(100vh - 60px)' }}>
+      {/* Hero Banner */}
+      <Paper
+        sx={{
+          background: 'linear-gradient(to bottom, #37475A, #EAEDED)',
+          height: 400,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          mb: -10,
+          borderRadius: 0,
+        }}
+      >
+        <Container maxWidth="xl">
+          <Box sx={{ textAlign: 'center', color: 'white', py: 8 }}>
+            <Typography
+              variant="h2"
+              sx={{
+                fontWeight: 700,
+                mb: 2,
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              }}
+            >
+              Amazon Clone へようこそ
+            </Typography>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 400,
+                textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+              }}
+            >
+              お買い得商品をお探しください
+            </Typography>
+          </Box>
+        </Container>
+      </Paper>
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+      {/* Main Content */}
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 1, boxShadow: 1 }}>
+          {/* Notice */}
+          <Alert severity="info" sx={{ mb: 4 }}>
+            <Typography variant="body2">
+              ※ レコメンド機能は開発中です。現在は商品をランダムに表示しています。
+            </Typography>
+          </Alert>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+          {/* 閲覧履歴に基づくおすすめ */}
+          <ProductSection
+            title="閲覧履歴に基づくおすすめ商品"
+            subtitle="あなたへのおすすめ"
+            products={recommendedProducts}
+          />
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+          {/* 今日のお得商品 */}
+          <ProductSection
+            title="今日のお得商品"
+            subtitle="お買い得価格でご提供"
+            products={todaysDeals}
+          />
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
+          {/* 新着商品 */}
+          <ProductSection
+            title="新着商品"
+            subtitle="最新の商品をチェック"
+            products={newArrivals}
+          />
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+          {/* 人気商品 */}
+          <ProductSection
+            title="人気商品"
+            subtitle="多くのお客様に選ばれています"
+            products={popularProducts}
+          />
+
+          {/* セール情報 */}
+          <Box sx={{ mt: 6, p: 4, bgcolor: '#FEF3C7', borderRadius: 2 }}>
+            <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, color: '#92400E' }}>
+              セール・キャンペーン情報
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              お得なセール情報は近日公開予定です。お楽しみに！
+            </Typography>
+          </Box>
+        </Box>
+      </Container>
+    </Box>
   );
 }
