@@ -205,10 +205,10 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
       <Dialog
         open={open}
         onClose={handleClose}
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
         PaperProps={{
-          sx: { minHeight: '80vh' },
+          sx: { minHeight: '85vh', maxHeight: '90vh' },
         }}
       >
         <DialogTitle sx={{ m: 0, p: 2, bgcolor: '#F9FAFB' }}>
@@ -239,7 +239,13 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
           <Tab label="画像管理" />
         </Tabs>
 
-        <DialogContent dividers>
+        <DialogContent
+          dividers
+          sx={{
+            overflowY: 'auto',
+            minHeight: '500px',
+          }}
+        >
           <form onSubmit={handleSubmit(onSubmit)} id="product-form">
             <TabPanel value={tabValue} index={0}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>

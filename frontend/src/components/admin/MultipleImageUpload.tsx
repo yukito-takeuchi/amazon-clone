@@ -140,8 +140,10 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
               sx={{
                 position: 'relative',
                 paddingTop: '100%',
+                minHeight: '200px',
                 overflow: 'visible',
                 boxShadow: 2,
+                borderRadius: 2,
                 '&:hover': {
                   boxShadow: 4,
                 },
@@ -247,6 +249,7 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
               sx={{
                 width: '100%',
                 paddingTop: '100%',
+                minHeight: '200px',
                 position: 'relative',
                 border: '3px dashed #D1D5DB',
                 borderRadius: 2,
