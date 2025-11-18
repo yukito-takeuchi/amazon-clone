@@ -21,6 +21,11 @@ export const authenticateUser = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    if (!auth) {
+      res.status(500).json({ error: 'Firebase not initialized' });
+      return;
+    }
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
