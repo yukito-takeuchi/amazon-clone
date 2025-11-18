@@ -6,7 +6,11 @@ dotenv.config();
 // Firebase Admin initialization
 // In development, you can use environment variables
 // In production, use service account key file
-if (!admin.apps.length) {
+const initializeFirebase = () => {
+  if (admin.apps.length) {
+    return;
+  }
+
   try {
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
       // Use service account key from environment variable (production)
@@ -14,26 +18,28 @@ if (!admin.apps.length) {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
-    } else if (process.env.FIREBASE_PROJECT_ID) {
+      console.log('✅ Firebase Admin SDK initialized (service account key)');
+    } else if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
       // Use individual environment variables (development)
       admin.initializeApp({
         credential: admin.credential.cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         }),
       });
+      console.log('✅ Firebase Admin SDK initialized (env variables)');
     } else {
-      console.warn('⚠️  Firebase Admin SDK not initialized - authentication will not work');
-    }
-
-    if (admin.apps.length > 0) {
-      console.log('✅ Firebase Admin SDK initialized');
+      console.warn('⚠️  Firebase Admin SDK not initialized - missing environment variables');
+      console.warn('   Required: FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL');
     }
   } catch (error) {
     console.error('❌ Firebase Admin initialization error:', error);
+    throw error;
   }
-}
+};
 
-export const auth = admin.auth();
+initializeFirebase();
+
+export const auth = admin.apps.length ? admin.auth() : null;
 export default admin;
