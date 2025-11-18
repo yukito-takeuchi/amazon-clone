@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Box, Typography, Paper } from "@mui/material";
 import { productsApi } from "@/lib/api/products";
@@ -14,7 +14,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useSnackbar } from "@/hooks/useSnackbar";
 import { LeftFilterSidebar } from "@/components/products/LeftFilterSidebar";
 
-export default function ProductsPage() {
+function ProductsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated } = useAuthStore();
@@ -221,5 +221,13 @@ export default function ProductsPage() {
         </Box>
       </Box>
     </Box>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProductsPageContent />
+    </Suspense>
   );
 }

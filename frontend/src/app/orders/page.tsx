@@ -120,7 +120,7 @@ export default function OrdersPage() {
                         <p className="text-gray-700">
                           {item.productName} × {item.quantity}
                         </p>
-                        <p className="font-semibold">¥{(item.price * item.quantity).toLocaleString()}</p>
+                        <p className="font-semibold">¥{(item.productPrice * item.quantity).toLocaleString()}</p>
                       </div>
                     ))}
                   </div>
