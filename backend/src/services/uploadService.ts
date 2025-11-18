@@ -10,21 +10,39 @@ const mkdir = promisify(fs.mkdir);
 let storage: Storage | null = null;
 let bucket: any = null;
 
+console.log('🔍 GCS Init Check:');
+console.log('  - NODE_ENV:', process.env.NODE_ENV);
+console.log('  - GCS_BUCKET_NAME:', process.env.GCS_BUCKET_NAME ? 'set' : 'not set');
+console.log('  - GCS_SERVICE_ACCOUNT_KEY:', process.env.GCS_SERVICE_ACCOUNT_KEY ? 'set' : 'not set');
+
 if (process.env.NODE_ENV === 'production' && process.env.GCS_BUCKET_NAME) {
   try {
     if (process.env.GCS_SERVICE_ACCOUNT_KEY) {
       const credentials = JSON.parse(process.env.GCS_SERVICE_ACCOUNT_KEY);
       storage = new Storage({ credentials });
+      console.log('  - Storage created with service account key');
     } else if (process.env.GCS_KEY_FILE) {
       storage = new Storage({ keyFilename: process.env.GCS_KEY_FILE });
+      console.log('  - Storage created with key file');
+    } else {
+      console.log('  - No GCS credentials provided');
     }
 
     if (storage) {
       bucket = storage.bucket(process.env.GCS_BUCKET_NAME);
       console.log('✅ Google Cloud Storage initialized');
+      console.log('  - Bucket:', process.env.GCS_BUCKET_NAME);
     }
   } catch (error) {
     console.error('❌ GCS initialization error:', error);
+  }
+} else {
+  console.log('⚠️  GCS not initialized - using local storage');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('  - Reason: Not in production mode');
+  }
+  if (!process.env.GCS_BUCKET_NAME) {
+    console.log('  - Reason: GCS_BUCKET_NAME not set');
   }
 }
 
