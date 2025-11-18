@@ -13,17 +13,16 @@ let bucket: any = null;
 console.log('🔍 GCS Init Check:');
 console.log('  - NODE_ENV:', process.env.NODE_ENV);
 console.log('  - GCS_BUCKET_NAME:', process.env.GCS_BUCKET_NAME ? 'set' : 'not set');
-console.log('  - GCS_SERVICE_ACCOUNT_KEY:', process.env.GCS_SERVICE_ACCOUNT_KEY ? 'set' : 'not set');
+console.log('  - GCS_CREDENTIALS:', process.env.GCS_CREDENTIALS ? 'set' : 'not set');
 
 if (process.env.NODE_ENV === 'production' && process.env.GCS_BUCKET_NAME) {
   try {
-    if (process.env.GCS_SERVICE_ACCOUNT_KEY) {
-      const credentials = JSON.parse(process.env.GCS_SERVICE_ACCOUNT_KEY);
+    if (process.env.GCS_CREDENTIALS) {
+      // Base64 encoded credentials
+      const decoded = Buffer.from(process.env.GCS_CREDENTIALS, 'base64').toString('utf-8');
+      const credentials = JSON.parse(decoded);
       storage = new Storage({ credentials });
-      console.log('  - Storage created with service account key');
-    } else if (process.env.GCS_KEY_FILE) {
-      storage = new Storage({ keyFilename: process.env.GCS_KEY_FILE });
-      console.log('  - Storage created with key file');
+      console.log('  - Storage created with base64 credentials');
     } else {
       console.log('  - No GCS credentials provided');
     }
