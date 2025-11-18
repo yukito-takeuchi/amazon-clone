@@ -32,6 +32,9 @@ cp .env.example .env
 NODE_ENV=development
 PORT=3001
 DATABASE_URL=postgresql://postgres:password@postgres:5432/amazon_clone
+
+# CORS（複数のオリジンはカンマ区切りで指定可能）
+# 例: CORS_ORIGIN=http://localhost:3000,https://yourdomain.vercel.app
 CORS_ORIGIN=http://localhost:3000
 
 # Firebase設定（オプション - 認証機能を使う場合）
