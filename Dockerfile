@@ -20,6 +20,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Install bash for debugging
+RUN apk add --no-cache bash
+
 # Copy package files
 COPY backend/package*.json ./
 
