@@ -5,12 +5,20 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install all dependencies (including devDependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-EXPOSE 5000
+# Build TypeScript
+RUN npm run build
 
-CMD ["npm", "run", "dev"]
+# Remove devDependencies to reduce image size
+RUN npm prune --production
+
+# Heroku uses $PORT environment variable
+# Don't use EXPOSE with hardcoded port
+
+# Start the production server
+CMD ["npm", "start"]
