@@ -16,9 +16,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import { ProductImage } from '@/types/product';
 
 interface MultipleImageUploadProps {
+  productId?: string;
   existingImages?: ProductImage[];
-  onImagesChange: (images: File[]) => void;
-  onImageDelete: (imageId: number) => Promise<void>;
+  newImages: File[];
+  onNewImagesChange: (images: File[]) => void;
+  onImageDeleted?: () => void;
+  disabled?: boolean;
   maxImages?: number;
 }
 
@@ -30,36 +33,49 @@ interface ImagePreview {
 }
 
 export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
+  productId,
   existingImages = [],
-  onImagesChange,
-  onImageDelete,
+  newImages,
+  onNewImagesChange,
+  onImageDeleted,
+  disabled = false,
   maxImages = 10,
 }) => {
-  const [images, setImages] = useState<ImagePreview[]>(() => {
-    console.log('MultipleImageUpload - existingImages:', existingImages);
-    return existingImages.map((img) => ({
-      id: img.id,
-      url: img.imageUrl,
-      isExisting: true,
-    }));
-  });
-
-  // Update images when existingImages prop changes
-  React.useEffect(() => {
-    console.log('MultipleImageUpload - existingImages changed:', existingImages);
-    if (existingImages.length > 0) {
-      setImages(existingImages.map((img) => ({
-        id: img.id,
-        url: img.imageUrl,
-        isExisting: true,
-      })));
-    }
-  }, [existingImages]);
-  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [images, setImages] = useState<ImagePreview[]>([]);
   const [deletingIds, setDeletingIds] = useState<Set<number | string>>(new Set());
   const [hoveredId, setHoveredId] = useState<number | string | null>(null);
 
+  // Update images when existingImages or newImages prop changes
+  React.useEffect(() => {
+    const existingPreviews: ImagePreview[] = existingImages.map((img) => {
+      // img.imageUrl is already a full URL from the backend
+      let imageUrl = img.imageUrl;
+
+      // Only add base URL if it's a relative path
+      if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+        imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}/${imageUrl}`;
+      }
+
+      return {
+        id: img.id,
+        url: imageUrl,
+        isExisting: true,
+      };
+    });
+
+    const newPreviews: ImagePreview[] = newImages.map((file, index) => ({
+      id: `new-${index}`,
+      url: URL.createObjectURL(file),
+      file,
+      isExisting: false,
+    }));
+
+    setImages([...existingPreviews, ...newPreviews]);
+  }, [existingImages, newImages]);
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
+
     const files = Array.from(event.target.files || []);
     const remainingSlots = maxImages - images.length;
 
@@ -68,28 +84,31 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
       return;
     }
 
-    const newPreviews: ImagePreview[] = files.map((file, index) => ({
-      id: `new-${Date.now()}-${index}`,
-      url: URL.createObjectURL(file),
-      file,
-      isExisting: false,
-    }));
-
-    setImages([...images, ...newPreviews]);
-    const updatedFiles = [...newFiles, ...files];
-    setNewFiles(updatedFiles);
-    onImagesChange(updatedFiles);
+    const updatedFiles = [...newImages, ...files];
+    onNewImagesChange(updatedFiles);
 
     event.target.value = '';
   };
 
   const handleDelete = async (imagePreview: ImagePreview) => {
+    if (disabled) return;
+
     if (imagePreview.isExisting) {
       // 既存画像を削除
+      if (!productId) {
+        alert('商品IDが見つかりません');
+        return;
+      }
+
       setDeletingIds(new Set(deletingIds).add(imagePreview.id));
       try {
-        await onImageDelete(imagePreview.id as number);
-        setImages(images.filter((img) => img.id !== imagePreview.id));
+        const { adminApi } = await import('@/lib/api/admin');
+        await adminApi.deleteProductImage(productId, imagePreview.id as number);
+
+        // 削除成功を親コンポーネントに通知
+        if (onImageDeleted) {
+          onImageDeleted();
+        }
       } catch (error) {
         console.error('Failed to delete image:', error);
         alert('画像の削除に失敗しました');
@@ -100,13 +119,9 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
       }
     } else {
       // 新規画像を削除
-      setImages(images.filter((img) => img.id !== imagePreview.id));
-      const updatedFiles = newFiles.filter((_, index) => {
-        const newImageId = `new-${Date.now()}-${index}`;
-        return newImageId !== imagePreview.id;
-      });
-      setNewFiles(updatedFiles);
-      onImagesChange(updatedFiles);
+      const imageIndex = parseInt(imagePreview.id.toString().split('-')[1]);
+      const updatedFiles = newImages.filter((_, index) => index !== imageIndex);
+      onNewImagesChange(updatedFiles);
 
       // ObjectURLを解放
       URL.revokeObjectURL(imagePreview.url);
@@ -124,16 +139,21 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
         商品画像 ({images.length}/{maxImages})
       </Typography>
 
-      <Grid container spacing={2}>
-        {images.map((image, index) => {
-          console.log(`Image ${index + 1}:`, image);
-          return (
-          <Grid item xs={6} sm={4} md={3} key={image.id}>
+      <Grid container spacing={3}>
+        {images.map((image, index) => (
+          <Grid item xs={12} sm={6} md={4} lg={3} key={image.id}>
             <Card
               sx={{
                 position: 'relative',
-                paddingTop: '100%',
+                width: '100%',
+                minWidth: '250px',
+                height: '300px',
                 overflow: 'visible',
+                boxShadow: 2,
+                borderRadius: 2,
+                '&:hover': {
+                  boxShadow: 4,
+                },
                 '&:hover .delete-button': {
                   opacity: 1,
                 },
@@ -141,10 +161,17 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
               onMouseEnter={() => setHoveredId(image.id)}
               onMouseLeave={() => setHoveredId(null)}
             >
-              <CardMedia
+              <Box
                 component="img"
-                image={image.url}
+                src={image.url}
                 alt={`画像 ${index + 1}`}
+                onError={(e) => {
+                  console.error('Image load error:', image.url);
+                  console.error('Error event:', e);
+                }}
+                onLoad={() => {
+                  console.log('Image loaded successfully:', image.url);
+                }}
                 sx={{
                   position: 'absolute',
                   top: 0,
@@ -152,6 +179,7 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
+                  backgroundColor: '#f0f0f0',
                 }}
               />
 
@@ -159,15 +187,17 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
               <Box
                 sx={{
                   position: 'absolute',
-                  bottom: 8,
-                  left: 8,
-                  bgcolor: 'rgba(0, 0, 0, 0.7)',
+                  bottom: 12,
+                  left: 12,
+                  bgcolor: 'rgba(0, 0, 0, 0.8)',
                   color: 'white',
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: 1,
-                  fontSize: 12,
-                  fontWeight: 600,
+                  px: 1.5,
+                  py: 0.75,
+                  borderRadius: 1.5,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  minWidth: 32,
+                  textAlign: 'center',
                 }}
               >
                 {index + 1}
@@ -177,26 +207,28 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
               <IconButton
                 className="delete-button"
                 onClick={() => handleDelete(image)}
-                disabled={deletingIds.has(image.id)}
+                disabled={disabled || deletingIds.has(image.id)}
                 sx={{
                   position: 'absolute',
-                  top: -8,
-                  right: -8,
+                  top: -12,
+                  right: -12,
                   bgcolor: 'error.main',
                   color: 'white',
                   opacity: hoveredId === image.id ? 1 : 0,
-                  transition: 'opacity 0.2s',
+                  transition: 'all 0.2s',
                   '&:hover': {
                     bgcolor: 'error.dark',
+                    transform: 'scale(1.1)',
                   },
-                  width: 32,
-                  height: 32,
+                  width: 40,
+                  height: 40,
+                  boxShadow: 3,
                 }}
               >
                 {deletingIds.has(image.id) ? (
-                  <CircularProgress size={16} sx={{ color: 'white' }} />
+                  <CircularProgress size={20} sx={{ color: 'white' }} />
                 ) : (
-                  <CloseIcon sx={{ fontSize: 18 }} />
+                  <CloseIcon sx={{ fontSize: 22 }} />
                 )}
               </IconButton>
 
@@ -205,15 +237,16 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
                 <Box
                   sx={{
                     position: 'absolute',
-                    top: 8,
-                    left: 8,
+                    top: 12,
+                    left: 12,
                     bgcolor: '#FF9900',
                     color: 'white',
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 1,
-                    fontSize: 11,
-                    fontWeight: 600,
+                    px: 1.5,
+                    py: 0.75,
+                    borderRadius: 1.5,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    boxShadow: 2,
                   }}
                 >
                   新規
@@ -221,25 +254,30 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
               )}
             </Card>
           </Grid>
-          );
-        })}
+        ))}
 
         {/* 画像追加ボタン */}
         {remainingSlots > 0 && (
-          <Grid item xs={6} sm={4} md={3}>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
             <Button
               component="label"
               sx={{
                 width: '100%',
-                paddingTop: '100%',
+                minWidth: '250px',
+                height: '300px',
                 position: 'relative',
-                border: '2px dashed #D1D5DB',
-                borderRadius: 1,
+                border: '3px dashed #D1D5DB',
+                borderRadius: 2,
                 bgcolor: '#F9FAFB',
                 cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 '&:hover': {
                   bgcolor: '#F3F4F6',
                   borderColor: '#FF9900',
+                  transform: 'scale(1.02)',
                 },
               }}
             >
@@ -253,12 +291,12 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
                 }}
               >
                 <AddPhotoAlternateIcon
-                  sx={{ fontSize: 48, color: '#9CA3AF', mb: 1 }}
+                  sx={{ fontSize: 64, color: '#9CA3AF', mb: 2 }}
                 />
-                <Typography sx={{ fontSize: 12, color: '#6B7280' }}>
+                <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#6B7280' }}>
                   画像を追加
                 </Typography>
-                <Typography sx={{ fontSize: 11, color: '#9CA3AF', mt: 0.5 }}>
+                <Typography sx={{ fontSize: 12, color: '#9CA3AF', mt: 1 }}>
                   残り {remainingSlots} 枚
                 </Typography>
               </Box>
@@ -267,6 +305,7 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
                 hidden
                 accept="image/*"
                 multiple
+                disabled={disabled}
                 onChange={handleFileSelect}
               />
             </Button>

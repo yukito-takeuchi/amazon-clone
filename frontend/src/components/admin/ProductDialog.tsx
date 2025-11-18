@@ -83,6 +83,7 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
     product?.imageUrl || null
   );
   const [newImages, setNewImages] = useState<File[]>([]);
+  const [currentProduct, setCurrentProduct] = useState<Product | undefined>(product);
 
   const {
     register,
@@ -104,6 +105,7 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
   useEffect(() => {
     if (open) {
       fetchCategories();
+      setCurrentProduct(product);
       // Reset form when dialog opens
       if (product) {
         reset({
@@ -136,6 +138,20 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
     } catch (error) {
       console.error('Failed to fetch categories:', error);
       showSnackbar('カテゴリの読み込みに失敗しました', 'error');
+    }
+  };
+
+  const handleImageDeleted = async () => {
+    // 画像削除後に商品データを再取得
+    if (product?.id) {
+      try {
+        const updatedProduct = await adminApi.getProduct(product.id);
+        setCurrentProduct(updatedProduct);
+        showSnackbar('画像を削除しました', 'success');
+      } catch (error) {
+        console.error('Failed to refresh product:', error);
+        showSnackbar('商品データの更新に失敗しました', 'error');
+      }
     }
   };
 
@@ -205,10 +221,10 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
       <Dialog
         open={open}
         onClose={handleClose}
-        maxWidth="md"
+        maxWidth="xl"
         fullWidth
         PaperProps={{
-          sx: { minHeight: '80vh' },
+          sx: { minHeight: '85vh', maxHeight: '90vh' },
         }}
       >
         <DialogTitle sx={{ m: 0, p: 2, bgcolor: '#F9FAFB' }}>
@@ -239,7 +255,15 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
           <Tab label="画像管理" />
         </Tabs>
 
-        <DialogContent dividers>
+        <DialogContent
+          dividers
+          sx={{
+            overflowY: 'auto',
+            minHeight: '500px',
+            px: 4,
+            py: 3,
+          }}
+        >
           <form onSubmit={handleSubmit(onSubmit)} id="product-form">
             <TabPanel value={tabValue} index={0}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -350,9 +374,10 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
                   </Typography>
                   <MultipleImageUpload
                     productId={product?.id}
-                    existingImages={product?.images || []}
+                    existingImages={currentProduct?.images || []}
                     newImages={newImages}
                     onNewImagesChange={setNewImages}
+                    onImageDeleted={handleImageDeleted}
                     disabled={isLoading}
                   />
                 </Box>
