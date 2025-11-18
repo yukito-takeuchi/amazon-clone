@@ -218,11 +218,9 @@ export const LeftFilterSidebar: React.FC<LeftFilterSidebarProps> = ({
               fontSize: 13,
               fontWeight: 600,
               py: 0.75,
-              '&:hover': {
-                bgcolor: '#F08804',
-              },
               boxShadow: 'none',
               '&:hover': {
+                bgcolor: '#F08804',
                 boxShadow: 'none',
               },
             }}

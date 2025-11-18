@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import {
   Box,
   Button,
-  Grid,
   IconButton,
   Typography,
   Card,
   CardMedia,
   CircularProgress,
+  Grid,
 } from '@mui/material';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import CloseIcon from '@mui/icons-material/Close';
@@ -141,7 +141,7 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
 
       <Grid container spacing={3}>
         {images.map((image, index) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={image.id}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={image.id}>
             <Card
               sx={{
                 position: 'relative',
@@ -258,7 +258,7 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
 
         {/* 画像追加ボタン */}
         {remainingSlots > 0 && (
-          <Grid item xs={12} sm={6} md={4} lg={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <Button
               component="label"
               sx={{

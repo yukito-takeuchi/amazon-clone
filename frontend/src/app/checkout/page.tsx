@@ -124,7 +124,6 @@ export default function CheckoutPage() {
         // Direct order creation (no payment processing)
         const order = await ordersApi.create({
           addressId: selectedAddressId,
-          paymentMethod: 'cash_on_delivery',
         });
 
         // Clear cart

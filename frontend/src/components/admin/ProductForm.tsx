@@ -185,6 +185,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
                 label="価格"
                 type="number"
                 {...field}
+                value={String(field.value || '')}
                 onChange={(e) => field.onChange(Number(e.target.value))}
                 error={errors.price?.message}
                 placeholder="0"
@@ -201,6 +202,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
                 label="在庫数"
                 type="number"
                 {...field}
+                value={String(field.value || '')}
                 onChange={(e) => field.onChange(Number(e.target.value))}
                 error={errors.stock?.message}
                 placeholder="0"
@@ -254,9 +256,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, mode }) => {
       {/* 商品画像（複数） */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <MultipleImageUpload
+          productId={product?.id}
           existingImages={product?.images || []}
-          onImagesChange={setNewImages}
-          onImageDelete={handleImageDelete}
+          newImages={newImages}
+          onNewImagesChange={setNewImages}
           maxImages={10}
         />
       </div>
