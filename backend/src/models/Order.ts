@@ -130,7 +130,7 @@ export class OrderModel {
       `SELECT
         oi.*,
         p.name as product_name,
-        p.image_url as product_image_url
+        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1) as product_image_url
        FROM order_items oi
        LEFT JOIN products p ON oi.product_id = p.id
        WHERE oi.order_id = $1
@@ -172,7 +172,7 @@ export class OrderModel {
           `SELECT
             oi.*,
             p.name as product_name,
-            p.image_url as product_image_url
+            (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1) as product_image_url
            FROM order_items oi
            LEFT JOIN products p ON oi.product_id = p.id
            WHERE oi.order_id = $1
@@ -234,7 +234,7 @@ export class OrderModel {
       `SELECT
         oi.*,
         p.name as product_name,
-        p.image_url as product_image_url
+        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1) as product_image_url
        FROM order_items oi
        LEFT JOIN products p ON oi.product_id = p.id
        WHERE oi.order_id = $1
