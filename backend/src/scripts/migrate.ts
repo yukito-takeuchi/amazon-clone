@@ -55,6 +55,16 @@ const runMigrations = async () => {
         filename: "004_add_full_name_to_addresses.sql",
         check: "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'addresses' AND column_name = 'full_name')",
         description: "full_name column"
+      },
+      {
+        filename: "005_fix_decimal_to_integer.sql",
+        check: "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'price' AND data_type = 'integer')",
+        description: "integer price column"
+      },
+      {
+        filename: "006_unify_product_images.sql",
+        check: "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'product_images' AND column_name = 'is_main')",
+        description: "is_main column in product_images"
       }
     ];
 

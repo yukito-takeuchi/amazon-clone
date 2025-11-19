@@ -5,6 +5,7 @@ export interface ProductImage {
   product_id: number;
   image_url: string;
   display_order: number;
+  is_main: boolean;
   created_at: Date;
 }
 
@@ -20,10 +21,49 @@ export class ProductImageModel {
     const result = await pool.query(
       `SELECT * FROM product_images
        WHERE product_id = $1
-       ORDER BY display_order ASC`,
+       ORDER BY is_main DESC, display_order ASC`,
       [productId]
     );
     return result.rows;
+  }
+
+  // Get main image for a product
+  static async getMainImage(productId: number): Promise<ProductImage | null> {
+    const result = await pool.query(
+      `SELECT * FROM product_images
+       WHERE product_id = $1 AND is_main = TRUE
+       LIMIT 1`,
+      [productId]
+    );
+    return result.rows[0] || null;
+  }
+
+  // Set main image
+  static async setMainImage(productId: number, imageId: number): Promise<boolean> {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Unset all main images for this product
+      await client.query(
+        'UPDATE product_images SET is_main = FALSE WHERE product_id = $1',
+        [productId]
+      );
+
+      // Set the specified image as main
+      const result = await client.query(
+        'UPDATE product_images SET is_main = TRUE WHERE id = $1 AND product_id = $2',
+        [imageId, productId]
+      );
+
+      await client.query('COMMIT');
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   // Create a new product image

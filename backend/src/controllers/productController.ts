@@ -33,15 +33,16 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
     const productsWithImages = await Promise.all(
       products.map(async (product) => {
         const images = await ProductImageModel.getByProductId(product.id);
-        const firstImage = images.length > 0 ? images[0] : null;
+        const mainImage = images.find(img => img.is_main) || images[0] || null;
 
         return {
           ...product,
-          imageUrl: firstImage?.image_url || product.image_url || null,
+          imageUrl: mainImage?.image_url || null,
           images: images.map((img) => ({
             id: img.id,
             imageUrl: img.image_url,
             displayOrder: img.display_order,
+            isMain: img.is_main,
           })),
         };
       })
@@ -78,16 +79,17 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
 
     // Fetch images for the product
     const images = await ProductImageModel.getByProductId(product.id);
-    const firstImage = images.length > 0 ? images[0] : null;
+    const mainImage = images.find(img => img.is_main) || images[0] || null;
 
     res.json({
       product: {
         ...product,
-        imageUrl: firstImage?.image_url || product.image_url || null,
+        imageUrl: mainImage?.image_url || null,
         images: images.map((img) => ({
           id: img.id,
           imageUrl: img.image_url,
           displayOrder: img.display_order,
+          isMain: img.is_main,
         })),
       },
     });
