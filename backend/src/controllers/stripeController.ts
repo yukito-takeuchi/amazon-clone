@@ -57,8 +57,9 @@ export const createCheckoutSession = async (
         return;
       }
 
-      // Stripe requires amount in cents (smallest currency unit)
-      const priceInCents = Math.round(product.price * 100);
+      // JPY is a zero-decimal currency, so no conversion needed
+      // (USD/EUR require * 100 for cents, but JPY doesn't)
+      const unitAmount = Math.round(product.price);
 
       lineItems.push({
         price_data: {
@@ -68,7 +69,7 @@ export const createCheckoutSession = async (
             description: product.description,
             images: product.image_url ? [product.image_url] : [],
           },
-          unit_amount: priceInCents,
+          unit_amount: unitAmount,
         },
         quantity: item.quantity,
       });
