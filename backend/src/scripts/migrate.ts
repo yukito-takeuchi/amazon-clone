@@ -34,22 +34,47 @@ const runMigrations = async () => {
       executedResult.rows.map((row) => row.filename)
     );
 
-    // Auto-mark 001_initial_schema.sql as executed if users table already exists
-    if (!executedMigrations.has("001_initial_schema.sql")) {
-      try {
-        const usersTableCheck = await pool.query(
-          "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users')"
-        );
-        if (usersTableCheck.rows[0].exists) {
-          console.log("\n📋 Users table detected - marking 001_initial_schema.sql as executed");
-          await pool.query(
-            "INSERT INTO migrations (filename) VALUES ($1) ON CONFLICT (filename) DO NOTHING",
-            ["001_initial_schema.sql"]
-          );
-          executedMigrations.add("001_initial_schema.sql");
+    // Auto-detect and mark already executed migrations based on existing database objects
+    const migrationChecks = [
+      {
+        filename: "001_initial_schema.sql",
+        check: "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users')",
+        description: "users table"
+      },
+      {
+        filename: "002_add_product_images.sql",
+        check: "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'product_images')",
+        description: "product_images table"
+      },
+      {
+        filename: "003_add_stripe_fields_to_orders.sql",
+        check: "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'stripe_session_id')",
+        description: "stripe_session_id column"
+      },
+      {
+        filename: "004_add_full_name_to_addresses.sql",
+        check: "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'addresses' AND column_name = 'full_name')",
+        description: "full_name column"
+      }
+    ];
+
+    console.log("\n🔍 Checking existing database objects...");
+
+    for (const migration of migrationChecks) {
+      if (!executedMigrations.has(migration.filename)) {
+        try {
+          const result = await pool.query(migration.check);
+          if (result.rows[0].exists) {
+            console.log(`  📋 ${migration.description} detected - marking ${migration.filename} as executed`);
+            await pool.query(
+              "INSERT INTO migrations (filename) VALUES ($1) ON CONFLICT (filename) DO NOTHING",
+              [migration.filename]
+            );
+            executedMigrations.add(migration.filename);
+          }
+        } catch (error) {
+          console.warn(`  ⚠️  Could not check for ${migration.description}:`, error);
         }
-      } catch (error) {
-        console.warn("Warning: Could not check for existing users table:", error);
       }
     }
 
