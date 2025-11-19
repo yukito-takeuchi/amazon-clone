@@ -7,6 +7,7 @@ import { ProductModel } from '../models/Product';
 import { CategoryModel } from '../models/Category';
 import { ProductImageModel } from '../models/ProductImage';
 import { uploadFile } from '../services/uploadService';
+import pool from '../config/database';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -28,15 +29,16 @@ export const getAllProducts = async (req: AuthRequest, res: Response): Promise<v
     const productsWithImages = await Promise.all(
       products.map(async (product) => {
         const images = await ProductImageModel.getByProductId(product.id);
-        const firstImage = images.length > 0 ? images[0] : null;
+        const mainImage = images.find(img => img.is_main) || images[0] || null;
 
         return {
           ...product,
-          imageUrl: firstImage?.image_url || product.image_url || null,
+          imageUrl: mainImage?.image_url || null,
           images: images.map((img: any) => ({
             id: img.id,
             url: img.image_url,
             displayOrder: img.display_order,
+            isMain: img.is_main,
           })),
         };
       })
@@ -137,28 +139,61 @@ export const deleteProduct = async (req: AuthRequest, res: Response): Promise<vo
 
 /**
  * Upload product image - Admin only
+ * This uploads a single image and sets it as the main image
  */
 export const uploadProductImage = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
+    const productId = parseInt(id);
 
     if (!req.file) {
       res.status(400).json({ error: 'No file uploaded' });
       return;
     }
 
-    const result = await uploadFile(req.file, 'products');
-
-    const product = await ProductModel.update(parseInt(id), { imageUrl: result.url });
-
+    // Check if product exists
+    const product = await ProductModel.findById(productId);
     if (!product) {
       res.status(404).json({ error: 'Product not found' });
       return;
     }
 
+    const result = await uploadFile(req.file, 'products');
+
+    // Get current max display order
+    const currentImages = await ProductImageModel.getByProductId(productId);
+    const maxOrder = currentImages.length > 0
+      ? Math.max(...currentImages.map(img => img.display_order))
+      : 0;
+
+    // Unset current main image if exists
+    if (currentImages.length > 0) {
+      const currentMain = currentImages.find(img => img.is_main);
+      if (currentMain) {
+        await pool.query(
+          'UPDATE product_images SET is_main = FALSE WHERE product_id = $1',
+          [productId]
+        );
+      }
+    }
+
+    // Insert new image as main
+    const imageResult = await pool.query(
+      `INSERT INTO product_images (product_id, image_url, display_order, is_main)
+       VALUES ($1, $2, $3, TRUE)
+       RETURNING *`,
+      [productId, result.url, maxOrder + 1]
+    );
+
     res.json({
       message: 'Product image uploaded successfully',
       imageUrl: result.url,
+      image: {
+        id: imageResult.rows[0].id,
+        imageUrl: imageResult.rows[0].image_url,
+        displayOrder: imageResult.rows[0].display_order,
+        isMain: imageResult.rows[0].is_main,
+      },
     });
   } catch (error) {
     console.error('Upload product image error:', error);

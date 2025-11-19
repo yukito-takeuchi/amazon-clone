@@ -1,5 +1,14 @@
 import pool from '../config/database';
 
+export interface ProductImage {
+  id: number;
+  product_id: number;
+  image_url: string;
+  display_order: number;
+  is_main: boolean;
+  created_at: Date;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -7,7 +16,8 @@ export interface Product {
   price: number;
   stock: number;
   category_id?: number;
-  image_url?: string;
+  image_url?: string; // Main image from product_images (for backward compatibility)
+  images?: ProductImage[]; // All images
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
@@ -47,13 +57,38 @@ export class ProductModel {
    * Create a new product
    */
   static async create(data: CreateProductData): Promise<Product> {
-    const result = await pool.query(
-      `INSERT INTO products (name, description, price, stock, category_id, image_url)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [data.name, data.description, data.price, data.stock, data.categoryId, data.imageUrl]
-    );
-    return result.rows[0];
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Insert product without image_url
+      const result = await client.query(
+        `INSERT INTO products (name, description, price, stock, category_id)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [data.name, data.description, data.price, data.stock, data.categoryId]
+      );
+
+      const product = result.rows[0];
+
+      // If imageUrl provided, insert into product_images
+      if (data.imageUrl) {
+        await client.query(
+          `INSERT INTO product_images (product_id, image_url, display_order, is_main)
+           VALUES ($1, $2, 1, TRUE)`,
+          [product.id, data.imageUrl]
+        );
+        product.image_url = data.imageUrl;
+      }
+
+      await client.query('COMMIT');
+      return product;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   /**
@@ -61,10 +96,24 @@ export class ProductModel {
    */
   static async findById(id: number): Promise<Product | null> {
     const result = await pool.query(
-      'SELECT * FROM products WHERE id = $1',
+      `SELECT p.*,
+        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1) as image_url
+       FROM products p WHERE p.id = $1`,
       [id]
     );
-    return result.rows[0] || null;
+
+    if (!result.rows[0]) return null;
+
+    // Get all images
+    const imagesResult = await pool.query(
+      'SELECT * FROM product_images WHERE product_id = $1 ORDER BY display_order ASC',
+      [id]
+    );
+
+    return {
+      ...result.rows[0],
+      images: imagesResult.rows,
+    };
   }
 
   /**
@@ -120,7 +169,9 @@ export class ProductModel {
     const offset = (page - 1) * limit;
 
     const result = await pool.query(
-      `SELECT * FROM products ${whereClause} ORDER BY created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`,
+      `SELECT p.*,
+        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1) as image_url
+       FROM products p ${whereClause} ORDER BY p.created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`,
       [...values, limit, offset]
     );
 
@@ -168,11 +219,8 @@ export class ProductModel {
       paramCount++;
     }
 
-    if (data.imageUrl !== undefined) {
-      fields.push(`image_url = $${paramCount}`);
-      values.push(data.imageUrl);
-      paramCount++;
-    }
+    // Note: imageUrl is now managed through product_images table
+    // Use setMainImage() or addImage() methods instead
 
     if (data.isActive !== undefined) {
       fields.push(`is_active = $${paramCount}`);
@@ -214,5 +262,98 @@ export class ProductModel {
       [id]
     );
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  /**
+   * Add image to product
+   */
+  static async addImage(productId: number, imageUrl: string, isMain: boolean = false): Promise<ProductImage> {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Get next display order
+      const orderResult = await client.query(
+        'SELECT COALESCE(MAX(display_order), 0) + 1 as next_order FROM product_images WHERE product_id = $1',
+        [productId]
+      );
+      const displayOrder = orderResult.rows[0].next_order;
+
+      // If setting as main, unset other main images
+      if (isMain) {
+        await client.query(
+          'UPDATE product_images SET is_main = FALSE WHERE product_id = $1',
+          [productId]
+        );
+      }
+
+      // Insert new image
+      const result = await client.query(
+        `INSERT INTO product_images (product_id, image_url, display_order, is_main)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [productId, imageUrl, displayOrder, isMain]
+      );
+
+      await client.query('COMMIT');
+      return result.rows[0];
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Set main image for product
+   */
+  static async setMainImage(productId: number, imageId: number): Promise<boolean> {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Unset all main images for this product
+      await client.query(
+        'UPDATE product_images SET is_main = FALSE WHERE product_id = $1',
+        [productId]
+      );
+
+      // Set the specified image as main
+      const result = await client.query(
+        'UPDATE product_images SET is_main = TRUE WHERE id = $1 AND product_id = $2',
+        [imageId, productId]
+      );
+
+      await client.query('COMMIT');
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Delete product image
+   */
+  static async deleteImage(imageId: number): Promise<boolean> {
+    const result = await pool.query(
+      'DELETE FROM product_images WHERE id = $1',
+      [imageId]
+    );
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  /**
+   * Get all images for product
+   */
+  static async getImages(productId: number): Promise<ProductImage[]> {
+    const result = await pool.query(
+      'SELECT * FROM product_images WHERE product_id = $1 ORDER BY display_order ASC',
+      [productId]
+    );
+    return result.rows;
   }
 }

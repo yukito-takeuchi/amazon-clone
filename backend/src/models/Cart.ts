@@ -65,7 +65,7 @@ export class CartModel {
         ci.*,
         p.name as product_name,
         p.price as product_price,
-        p.image_url as product_image_url,
+        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1) as product_image_url,
         p.stock as product_stock
        FROM cart_items ci
        JOIN products p ON ci.product_id = p.id

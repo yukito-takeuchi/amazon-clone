@@ -38,7 +38,7 @@ export const getOrders = async (req: AuthRequest, res: Response): Promise<void> 
         productId: item.product_id,
         productName: item.product_name,
         quantity: item.quantity,
-        price: item.price,
+        productPrice: item.price,
       })),
     }));
 
@@ -90,7 +90,7 @@ export const getOrderById = async (req: AuthRequest, res: Response): Promise<voi
         productId: item.product_id,
         productName: item.product_name,
         quantity: item.quantity,
-        price: item.price,
+        productPrice: item.price,
       })),
     };
 
