@@ -12,6 +12,9 @@ import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { ImageGalleryDialog } from '@/components/products/ImageGalleryDialog';
+import { ReviewSummary } from '@/components/review/ReviewSummary';
+import { ReviewSection } from '@/components/review/ReviewSection';
+import { reviewApi } from '@/lib/api/review';
 
 export default function ProductDetailPage() {
   const router = useRouter();
@@ -26,6 +29,7 @@ export default function ProductDetailPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [reviewSummary, setReviewSummary] = useState({ averageRating: 0, totalCount: 0 });
 
   useEffect(() => {
     if (params.id) {
@@ -38,6 +42,14 @@ export default function ProductDetailPage() {
     try {
       const data = await productsApi.getById(id);
       setProduct(data);
+
+      // Fetch review summary
+      try {
+        const reviewData = await reviewApi.getProductReviews(parseInt(id));
+        setReviewSummary(reviewData.summary);
+      } catch (error) {
+        console.error('Failed to fetch reviews:', error);
+      }
     } catch (error) {
       console.error('Failed to fetch product:', error);
       showSnackbar('商品の読み込みに失敗しました', 'error');
@@ -239,6 +251,19 @@ export default function ProductDetailPage() {
                 {product.name}
               </h1>
 
+              {/* Review Summary */}
+              <div className="mb-4">
+                <ReviewSummary
+                  averageRating={reviewSummary.averageRating}
+                  totalCount={reviewSummary.totalCount}
+                  onScrollToReviews={() => {
+                    document.getElementById('customer-reviews')?.scrollIntoView({
+                      behavior: 'smooth',
+                    });
+                  }}
+                />
+              </div>
+
               <div className="mb-4">
                 <span className="text-4xl font-bold text-gray-900">
                   ¥{product.price.toLocaleString()}
@@ -325,6 +350,9 @@ export default function ProductDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Review Section */}
+          <ReviewSection productId={parseInt(params.id as string)} />
         </div>
       </div>
     </div>
