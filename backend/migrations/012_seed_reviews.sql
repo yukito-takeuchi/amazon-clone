@@ -82,10 +82,10 @@ BEGIN
 
   -- Loop through each product
   FOR v_product IN SELECT id FROM products WHERE is_active = true LOOP
-    -- Create 10 reviews per product
+    -- Create 10 reviews per product (one per user)
     FOR i IN 1..10 LOOP
-      -- Random user
-      v_user_id := v_user_ids[1 + floor(random() * array_length(v_user_ids, 1))::int];
+      -- Use each user in order (not random)
+      v_user_id := v_user_ids[i];
 
       -- Random rating (weighted towards positive)
       v_rating := CASE
@@ -111,14 +111,9 @@ BEGIN
         v_comment := v_negative_comments[1 + floor(random() * array_length(v_negative_comments, 1))::int];
       END IF;
 
-      -- Insert review (ignore duplicates)
-      BEGIN
-        INSERT INTO reviews (user_id, product_id, rating, title, comment, created_at)
-        VALUES (v_user_id, v_product.id, v_rating, v_title, v_comment, NOW() - (v_days_ago || ' days')::interval);
-      EXCEPTION WHEN unique_violation THEN
-        -- Skip duplicate user/product combination
-        NULL;
-      END;
+      -- Insert review
+      INSERT INTO reviews (user_id, product_id, rating, title, comment, created_at)
+      VALUES (v_user_id, v_product.id, v_rating, v_title, v_comment, NOW() - (v_days_ago || ' days')::interval);
     END LOOP;
   END LOOP;
 END $$;
