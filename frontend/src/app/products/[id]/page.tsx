@@ -15,6 +15,8 @@ import { ImageGalleryDialog } from '@/components/products/ImageGalleryDialog';
 import { ReviewSummary } from '@/components/review/ReviewSummary';
 import { ReviewSection } from '@/components/review/ReviewSection';
 import { reviewApi } from '@/lib/api/review';
+import { recommendationApi, ProductRecommendation } from '@/lib/api/recommendation';
+import { RecommendationSection } from '@/components/recommendation/RecommendationSection';
 
 export default function ProductDetailPage() {
   const router = useRouter();
@@ -30,12 +32,37 @@ export default function ProductDetailPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [reviewSummary, setReviewSummary] = useState({ averageRating: 0, totalCount: 0 });
+  const [similarProducts, setSimilarProducts] = useState<ProductRecommendation[]>([]);
+  const [similarLoading, setSimilarLoading] = useState(false);
 
   useEffect(() => {
     if (params.id) {
       fetchProduct(params.id as string);
+      fetchSimilarProducts(params.id as string);
+      recordView(params.id as string);
     }
   }, [params.id]);
+
+  const recordView = async (id: string) => {
+    if (!isAuthenticated) return;
+    try {
+      await recommendationApi.recordView(parseInt(id));
+    } catch (error) {
+      // Silent fail - view tracking is not critical
+    }
+  };
+
+  const fetchSimilarProducts = async (id: string) => {
+    setSimilarLoading(true);
+    try {
+      const data = await recommendationApi.getSimilarProducts(parseInt(id), 10);
+      setSimilarProducts(data.recommendations);
+    } catch (error) {
+      console.error('Failed to fetch similar products:', error);
+    } finally {
+      setSimilarLoading(false);
+    }
+  };
 
   const fetchProduct = async (id: string) => {
     setIsLoading(true);
@@ -349,6 +376,15 @@ export default function ProductDetailPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Similar Products */}
+          <div className="mt-8">
+            <RecommendationSection
+              title="この商品に関連する商品"
+              products={similarProducts}
+              loading={similarLoading}
+            />
           </div>
 
           {/* Review Section */}

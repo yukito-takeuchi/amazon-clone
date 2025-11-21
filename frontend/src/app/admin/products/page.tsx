@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,6 +15,7 @@ import {
   Chip,
   Box,
   Typography,
+  CircularProgress,
 } from '@mui/material';
 import { useAuthStore } from '@/store/authStore';
 import { adminApi } from '@/lib/api/admin';
@@ -24,15 +25,22 @@ import { useSnackbar } from '@/hooks/useSnackbar';
 import { ProductDialog } from '@/components/admin/ProductDialog';
 import { FiEdit, FiPlus } from 'react-icons/fi';
 
+const ITEMS_PER_PAGE = 20;
+
 export default function AdminProductsPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
   const { showSnackbar, SnackbarComponent } = useSnackbar();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -41,22 +49,65 @@ export default function AdminProductsPage() {
       showSnackbar('管理者権限が必要です', 'error');
       router.push('/');
     } else if (user?.isAdmin) {
-      fetchProducts();
+      fetchProducts(1, true);
     }
   }, [isAuthenticated, authLoading, user, router]);
 
-  const fetchProducts = async () => {
-    setIsLoading(true);
+  const fetchProducts = async (pageNum: number, reset: boolean = false) => {
+    if (reset) {
+      setIsLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
     try {
-      const data = await adminApi.getAllProducts();
-      setProducts(data);
+      const { products: newProducts, hasMore: more } = await adminApi.getAllProducts(pageNum, ITEMS_PER_PAGE);
+      if (reset) {
+        setProducts(newProducts);
+      } else {
+        setProducts(prev => [...prev, ...newProducts]);
+      }
+      setHasMore(more);
+      setPage(pageNum);
     } catch (error) {
       console.error('Failed to fetch products:', error);
       showSnackbar('商品の読み込みに失敗しました', 'error');
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
+
+  const loadMore = useCallback(() => {
+    if (!isLoadingMore && hasMore) {
+      fetchProducts(page + 1, false);
+    }
+  }, [isLoadingMore, hasMore, page]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [loadMore, hasMore, isLoadingMore, isLoading]);
 
   const handleOpenCreateDialog = () => {
     setDialogMode('create');
@@ -76,7 +127,7 @@ export default function AdminProductsPage() {
   };
 
   const handleDialogSuccess = () => {
-    fetchProducts();
+    fetchProducts(1, true);
   };
 
   if (authLoading || !user?.isAdmin) {
@@ -259,6 +310,19 @@ export default function AdminProductsPage() {
         product={selectedProduct}
         mode={dialogMode}
       />
+
+      {/* Load more trigger */}
+      <div ref={loadMoreRef} style={{ height: 20 }} />
+      {isLoadingMore && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+          <CircularProgress size={30} />
+        </Box>
+      )}
+      {!hasMore && products.length > 0 && (
+        <Typography sx={{ textAlign: 'center', py: 2, color: '#6B7280' }}>
+          全ての商品を表示しました
+        </Typography>
+      )}
     </Box>
   );
 }

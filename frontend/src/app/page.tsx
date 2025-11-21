@@ -1,18 +1,33 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Box, Container, Typography, Paper, Alert } from '@mui/material';
+import { Box, Container, Typography, Paper } from '@mui/material';
 import { productsApi } from '@/lib/api/products';
 import { Product } from '@/types/product';
 import { ProductSection } from '@/components/home/ProductSection';
+import { recommendationApi, ProductRecommendation } from '@/lib/api/recommendation';
+import { RecommendationSection } from '@/components/recommendation/RecommendationSection';
+import { useAuthStore } from '@/store/authStore';
 
 export default function HomePage() {
+  const { isAuthenticated } = useAuthStore();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [recommendations, setRecommendations] = useState<ProductRecommendation[]>([]);
+  const [popularProducts, setPopularProducts] = useState<ProductRecommendation[]>([]);
+  const [recLoading, setRecLoading] = useState(false);
+  const [popLoading, setPopLoading] = useState(false);
 
   useEffect(() => {
     fetchProducts();
+    fetchPopularProducts();
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchRecommendations();
+    }
+  }, [isAuthenticated]);
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -23,6 +38,30 @@ export default function HomePage() {
       console.error('Failed to fetch products:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchRecommendations = async () => {
+    setRecLoading(true);
+    try {
+      const data = await recommendationApi.getRecommendations(10);
+      setRecommendations(data.recommendations);
+    } catch (error) {
+      console.error('Failed to fetch recommendations:', error);
+    } finally {
+      setRecLoading(false);
+    }
+  };
+
+  const fetchPopularProducts = async () => {
+    setPopLoading(true);
+    try {
+      const data = await recommendationApi.getPopularProducts(10);
+      setPopularProducts(data.recommendations);
+    } catch (error) {
+      console.error('Failed to fetch popular products:', error);
+    } finally {
+      setPopLoading(false);
     }
   };
 
@@ -37,14 +76,12 @@ export default function HomePage() {
   };
 
   // 各セクション用の商品を準備
-  const recommendedProducts = shuffleArray(allProducts).slice(0, 8);
   const todaysDeals = [...allProducts]
     .sort((a, b) => a.price - b.price)
     .slice(0, 8);
   const newArrivals = [...allProducts]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 8);
-  const popularProducts = shuffleArray(allProducts).slice(0, 8);
 
   if (isLoading) {
     return (
@@ -100,18 +137,20 @@ export default function HomePage() {
       {/* Main Content */}
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 1, boxShadow: 1 }}>
-          {/* Notice */}
-          <Alert severity="info" sx={{ mb: 4 }}>
-            <Typography variant="body2">
-              ※ レコメンド機能は開発中です。現在は商品をランダムに表示しています。
-            </Typography>
-          </Alert>
+          {/* パーソナライズおすすめ (ログイン時のみ) */}
+          {isAuthenticated && (
+            <RecommendationSection
+              title="あなたへのおすすめ"
+              products={recommendations}
+              loading={recLoading}
+            />
+          )}
 
-          {/* 閲覧履歴に基づくおすすめ */}
-          <ProductSection
-            title="閲覧履歴に基づくおすすめ商品"
-            subtitle="あなたへのおすすめ"
-            products={recommendedProducts}
+          {/* 人気商品 */}
+          <RecommendationSection
+            title="人気商品"
+            products={popularProducts}
+            loading={popLoading}
           />
 
           {/* 今日のお得商品 */}
@@ -128,13 +167,7 @@ export default function HomePage() {
             products={newArrivals}
           />
 
-          {/* 人気商品 */}
-          <ProductSection
-            title="人気商品"
-            subtitle="多くのお客様に選ばれています"
-            products={popularProducts}
-          />
-
+          
           {/* セール情報 */}
           <Box sx={{ mt: 6, p: 4, bgcolor: '#FEF3C7', borderRadius: 2 }}>
             <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, color: '#92400E' }}>
