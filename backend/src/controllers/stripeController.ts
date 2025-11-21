@@ -343,6 +343,20 @@ export const confirmPayment = async (req: AuthRequest, res: Response): Promise<v
 
     console.log('Order created successfully from confirmation:', order.id);
 
+    // Send order confirmation email
+    try {
+      const user = await UserModel.findById(userId);
+      if (user) {
+        const orderWithItems = await OrderModel.findById(order.id, userId);
+        if (orderWithItems) {
+          await EmailService.sendOrderConfirmation(orderWithItems, user.email, user.name);
+        }
+      }
+    } catch (emailError) {
+      console.error('Failed to send order confirmation email:', emailError);
+      // Don't throw - email failure shouldn't break the order flow
+    }
+
     res.json({
       message: 'Order created successfully',
       order: {
