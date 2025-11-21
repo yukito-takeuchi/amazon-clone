@@ -55,7 +55,7 @@ export interface UploadResult {
  */
 export async function uploadFile(
   file: Express.Multer.File,
-  folder: 'products' | 'avatars'
+  folder: 'products' | 'avatars' | 'reviews'
 ): Promise<UploadResult> {
   const timestamp = Date.now();
   const extension = path.extname(file.originalname);

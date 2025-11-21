@@ -65,6 +65,11 @@ const runMigrations = async () => {
         filename: "006_unify_product_images.sql",
         check: "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'product_images' AND column_name = 'is_main')",
         description: "is_main column in product_images"
+      },
+      {
+        filename: "007_add_reviews.sql",
+        check: "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'reviews')",
+        description: "reviews table"
       }
     ];
 

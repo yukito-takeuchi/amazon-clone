@@ -21,6 +21,7 @@ import adminRoutes from './routes/adminRoutes';
 import cartRoutes from './routes/cartRoutes';
 import orderRoutes from './routes/orderRoutes';
 import stripeRoutes from './routes/stripeRoutes';
+import reviewRoutes from './routes/reviewRoutes';
 
 // Import middleware
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -87,6 +88,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/stripe', stripeRoutes);
+app.use('/api', reviewRoutes);
 
 // Categories endpoint (public)
 app.get('/api/categories', async (req: Request, res: Response) => {

@@ -29,8 +29,8 @@ RUN npm ci --only=production
 # Copy built files from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Copy migration files if needed
-COPY --from=builder /app/migrations ./migrations 2>/dev/null || true
+# Copy migration files
+COPY --from=builder /app/migrations ./migrations
 
 # Heroku sets PORT environment variable dynamically
 ENV NODE_ENV=production
