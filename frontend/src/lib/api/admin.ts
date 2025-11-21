@@ -123,9 +123,12 @@ export const adminApi = {
     return transformProduct(response.data.product);
   },
 
-  getAllProducts: async (): Promise<Product[]> => {
-    const response = await apiClient.get('/admin/products');
-    return response.data.products.map(transformProduct);
+  getAllProducts: async (page: number = 1, limit: number = 20): Promise<{ products: Product[]; hasMore: boolean }> => {
+    const response = await apiClient.get(`/admin/products?page=${page}&limit=${limit}`);
+    const products = response.data.products.map(transformProduct);
+    const { pagination } = response.data;
+    const hasMore = pagination ? pagination.page < pagination.totalPages : false;
+    return { products, hasMore };
   },
 
   // Multiple Images
