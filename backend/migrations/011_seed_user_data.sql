@@ -16,8 +16,8 @@ ALTER SEQUENCE carts_id_seq RESTART WITH 1;
 
 -- Ensure test user exists
 INSERT INTO users (firebase_uid, email, name, is_admin)
-VALUES ('SxoAA9SOnfXQW4xPqBUbqhGohO12', 'test@example.com', 'テストユーザー', false)
-ON CONFLICT (firebase_uid) DO UPDATE SET name = 'テストユーザー';
+VALUES ('SxoAA9SOnfXQW4xPqBUbqhGohO12', 'test@example.com', 'テストユーザー', true)
+ON CONFLICT (firebase_uid) DO UPDATE SET name = 'テストユーザー', is_admin = true;
 
 -- Get user_id
 DO $$
