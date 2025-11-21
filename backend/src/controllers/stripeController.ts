@@ -4,6 +4,8 @@ import { stripe, FRONTEND_URL, STRIPE_WEBHOOK_SECRET } from '../config/stripe';
 import { CartModel } from '../models/Cart';
 import { ProductModel } from '../models/Product';
 import { OrderModel } from '../models/Order';
+import { UserModel } from '../models/User';
+import { EmailService } from '../services/emailService';
 import Stripe from 'stripe';
 
 /**
@@ -230,6 +232,20 @@ async function handleCheckoutSessionCompleted(
   await CartModel.clearCart(userId);
 
   console.log('Order created successfully:', order.id);
+
+  // Send order confirmation email
+  try {
+    const user = await UserModel.findById(userId);
+    if (user) {
+      const orderWithItems = await OrderModel.findById(order.id, userId);
+      if (orderWithItems) {
+        await EmailService.sendOrderConfirmation(orderWithItems, user.email, user.name);
+      }
+    }
+  } catch (emailError) {
+    console.error('Failed to send order confirmation email:', emailError);
+    // Don't throw - email failure shouldn't break the order flow
+  }
 }
 
 /**
