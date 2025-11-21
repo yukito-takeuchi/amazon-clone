@@ -87,3 +87,47 @@ export const requireAdmin = (
 
   next();
 };
+
+// Alias for authenticateUser
+export const authMiddleware = authenticateUser;
+
+/**
+ * Optional authentication - attaches user if token is valid, but doesn't fail if missing
+ */
+export const optionalAuthMiddleware = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ') || !auth) {
+      return next();
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+    const decodedToken = await auth.verifyIdToken(token);
+    const firebaseUid = decodedToken.uid;
+
+    const result = await pool.query(
+      'SELECT id, firebase_uid, email, is_admin FROM users WHERE firebase_uid = $1',
+      [firebaseUid]
+    );
+
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      req.user = {
+        id: user.id,
+        firebaseUid: user.firebase_uid,
+        email: user.email,
+        isAdmin: user.is_admin,
+      };
+    }
+
+    next();
+  } catch (error) {
+    // Silently continue without user
+    next();
+  }
+};
