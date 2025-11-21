@@ -1,9 +1,8 @@
-import { SendEmailCommand } from '@aws-sdk/client-ses';
-import { sesClient } from '../config/ses';
+import { resend } from '../config/resend';
 import { OrderWithItems } from '../models/Order';
 import { generateOrderConfirmationEmail } from '../templates/orderConfirmation';
 
-const FROM_EMAIL = process.env.SES_FROM_EMAIL || 'noreply@example.com';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 const IS_ENABLED = process.env.EMAIL_ENABLED === 'true';
 
 export class EmailService {
@@ -23,30 +22,13 @@ export class EmailService {
     try {
       const { subject, html, text } = generateOrderConfirmationEmail(order, userName);
 
-      const command = new SendEmailCommand({
-        Source: FROM_EMAIL,
-        Destination: {
-          ToAddresses: [userEmail],
-        },
-        Message: {
-          Subject: {
-            Data: subject,
-            Charset: 'UTF-8',
-          },
-          Body: {
-            Html: {
-              Data: html,
-              Charset: 'UTF-8',
-            },
-            Text: {
-              Data: text,
-              Charset: 'UTF-8',
-            },
-          },
-        },
+      await resend.emails.send({
+        from: FROM_EMAIL,
+        to: userEmail,
+        subject: subject,
+        html: html,
+        text: text,
       });
-
-      await sesClient.send(command);
 
       console.log(`✅ Order confirmation email sent to ${userEmail} for order #${order.id}`);
     } catch (error) {
