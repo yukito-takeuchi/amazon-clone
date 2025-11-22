@@ -10,6 +10,7 @@ import {
   uploadProductImage,
   uploadProductImages,
   deleteProductImage,
+  setMainProductImage,
   uploadMiddleware,
   uploadMultipleMiddleware,
   createCategory,
@@ -77,6 +78,13 @@ router.post('/products/:id/images', uploadMultipleMiddleware, uploadProductImage
  * @access  Private/Admin
  */
 router.delete('/products/:productId/images/:imageId', deleteProductImage);
+
+/**
+ * @route   PUT /api/admin/products/:productId/images/:imageId/main
+ * @desc    Set image as main image
+ * @access  Private/Admin
+ */
+router.put('/products/:productId/images/:imageId/main', setMainProductImage);
 
 /**
  * @route   POST /api/admin/categories

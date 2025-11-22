@@ -25,7 +25,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Product, Category } from '@/types/product';
 import { adminApi, CreateProductData } from '@/lib/api/admin';
 import { Button } from '@/components/common/Button';
-import { ImageUpload } from './ImageUpload';
 import { MultipleImageUpload } from './MultipleImageUpload';
 import { useSnackbar } from '@/hooks/useSnackbar';
 
@@ -79,9 +78,6 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [tabValue, setTabValue] = useState(0);
-  const [imageFile, setImageFile] = useState<File | string | null>(
-    product?.imageUrl || null
-  );
   const [newImages, setNewImages] = useState<File[]>([]);
   const [currentProduct, setCurrentProduct] = useState<Product | undefined>(product);
 
@@ -115,7 +111,6 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
           stock: product.stock,
           categoryId: product.categoryId,
         });
-        setImageFile(product.imageUrl || null);
       } else {
         reset({
           name: '',
@@ -124,7 +119,6 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
           stock: 0,
           categoryId: '',
         });
-        setImageFile(null);
       }
       setNewImages([]);
       setTabValue(0);
@@ -165,10 +159,6 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
         stock: data.stock,
         categoryId: data.categoryId,
       };
-
-      if (imageFile instanceof File) {
-        productData.image = imageFile;
-      }
 
       let savedProduct: any;
 
@@ -252,7 +242,7 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
           sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
         >
           <Tab label="基本情報" />
-          <Tab label="画像管理" />
+          <Tab label="画像管理" disabled={!product?.id} />
         </Tabs>
 
         <DialogContent
@@ -356,31 +346,18 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
             </TabPanel>
 
             <TabPanel value={tabValue} index={1}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                    メイン画像
-                  </Typography>
-                  <ImageUpload
-                    value={imageFile}
-                    onChange={setImageFile}
-                    disabled={isLoading}
-                  />
-                </Box>
-
-                <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                    追加画像
-                  </Typography>
-                  <MultipleImageUpload
-                    productId={product?.id}
-                    existingImages={currentProduct?.images || []}
-                    newImages={newImages}
-                    onNewImagesChange={setNewImages}
-                    onImageDeleted={handleImageDeleted}
-                    disabled={isLoading}
-                  />
-                </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  ※ 最初の画像がメイン画像として使用されます
+                </Typography>
+                <MultipleImageUpload
+                  productId={product?.id}
+                  existingImages={currentProduct?.images || []}
+                  newImages={newImages}
+                  onNewImagesChange={setNewImages}
+                  onImageDeleted={handleImageDeleted}
+                  disabled={isLoading}
+                />
               </Box>
             </TabPanel>
           </form>
