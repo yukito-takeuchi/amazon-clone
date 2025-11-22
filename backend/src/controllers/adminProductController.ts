@@ -323,5 +323,35 @@ export const deleteProductImage = async (req: AuthRequest, res: Response): Promi
   }
 };
 
+/**
+ * Set main image for product - Admin only
+ */
+export const setMainProductImage = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { productId, imageId } = req.params;
+
+    // Check if image exists and belongs to the product
+    const image = await ProductImageModel.getById(parseInt(imageId));
+
+    if (!image) {
+      res.status(404).json({ error: 'Image not found' });
+      return;
+    }
+
+    if (image.product_id !== parseInt(productId)) {
+      res.status(403).json({ error: 'Image does not belong to this product' });
+      return;
+    }
+
+    // Set as main image
+    await ProductModel.setMainImage(parseInt(productId), parseInt(imageId));
+
+    res.json({ message: 'Main image updated successfully' });
+  } catch (error) {
+    console.error('Set main image error:', error);
+    res.status(500).json({ error: 'Failed to set main image' });
+  }
+};
+
 export const uploadMiddleware = upload.single('image');
 export const uploadMultipleMiddleware = upload.array('images', 10); // Max 10 files

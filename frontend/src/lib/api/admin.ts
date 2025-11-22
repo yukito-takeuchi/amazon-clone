@@ -148,4 +148,8 @@ export const adminApi = {
   deleteProductImage: async (productId: string, imageId: number): Promise<void> => {
     await apiClient.delete(`/admin/products/${productId}/images/${imageId}`);
   },
+
+  setMainImage: async (productId: string, imageId: number): Promise<void> => {
+    await apiClient.put(`/admin/products/${productId}/images/${imageId}/main`);
+  },
 };

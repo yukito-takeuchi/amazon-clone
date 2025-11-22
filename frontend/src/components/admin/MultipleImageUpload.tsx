@@ -13,6 +13,8 @@ import {
 } from '@mui/material';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import CloseIcon from '@mui/icons-material/Close';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 import { ProductImage } from '@/types/product';
 
 interface MultipleImageUploadProps {
@@ -30,6 +32,7 @@ interface ImagePreview {
   url: string;
   file?: File;
   isExisting: boolean;
+  isMain?: boolean;
 }
 
 export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
@@ -47,27 +50,31 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
 
   // Update images when existingImages or newImages prop changes
   React.useEffect(() => {
-    const existingPreviews: ImagePreview[] = existingImages.map((img) => {
-      // img.imageUrl is already a full URL from the backend
-      let imageUrl = img.imageUrl;
+    const existingPreviews: ImagePreview[] = existingImages
+      .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+      .map((img) => {
+        // img.imageUrl is already a full URL from the backend
+        let imageUrl = img.imageUrl;
 
-      // Only add base URL if it's a relative path
-      if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-        imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}/${imageUrl}`;
-      }
+        // Only add base URL if it's a relative path
+        if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+          imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}/${imageUrl}`;
+        }
 
-      return {
-        id: img.id,
-        url: imageUrl,
-        isExisting: true,
-      };
-    });
+        return {
+          id: img.id,
+          url: imageUrl,
+          isExisting: true,
+          isMain: img.isMain || false,
+        };
+      });
 
     const newPreviews: ImagePreview[] = newImages.map((file, index) => ({
       id: `new-${index}`,
       url: URL.createObjectURL(file),
       file,
       isExisting: false,
+      isMain: false,
     }));
 
     setImages([...existingPreviews, ...newPreviews]);
@@ -88,6 +95,23 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
     onNewImagesChange(updatedFiles);
 
     event.target.value = '';
+  };
+
+  const handleSetMain = async (imagePreview: ImagePreview) => {
+    if (disabled || !imagePreview.isExisting || !productId) return;
+
+    try {
+      const { adminApi } = await import('@/lib/api/admin');
+      await adminApi.setMainImage(productId, imagePreview.id as number);
+
+      // 成功を親コンポーネントに通知
+      if (onImageDeleted) {
+        onImageDeleted();
+      }
+    } catch (error) {
+      console.error('Failed to set main image:', error);
+      alert('メイン画像の設定に失敗しました');
+    }
   };
 
   const handleDelete = async (imagePreview: ImagePreview) => {
@@ -182,6 +206,29 @@ export const MultipleImageUpload: React.FC<MultipleImageUploadProps> = ({
                   backgroundColor: '#f0f0f0',
                 }}
               />
+
+              {/* メイン画像ボタン (既存画像のみ) */}
+              {image.isExisting && (
+                <IconButton
+                  onClick={() => handleSetMain(image)}
+                  disabled={disabled || image.isMain}
+                  sx={{
+                    position: 'absolute',
+                    top: 12,
+                    right: 12,
+                    bgcolor: image.isMain ? '#FF9900' : 'rgba(255, 255, 255, 0.9)',
+                    color: image.isMain ? 'white' : '#FF9900',
+                    '&:hover': {
+                      bgcolor: image.isMain ? '#FF9900' : 'rgba(255, 255, 255, 1)',
+                    },
+                    width: 40,
+                    height: 40,
+                    boxShadow: 2,
+                  }}
+                >
+                  {image.isMain ? <StarIcon /> : <StarBorderIcon />}
+                </IconButton>
+              )}
 
               {/* 表示順序 */}
               <Box
