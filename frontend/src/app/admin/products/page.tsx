@@ -92,6 +92,7 @@ export default function AdminProductsPage() {
   const fetchProducts = async (pageNum: number, reset: boolean = false) => {
     if (reset) {
       setIsLoading(true);
+      setPage(1);
     } else {
       setIsLoadingMore(true);
     }
@@ -103,7 +104,6 @@ export default function AdminProductsPage() {
         setProducts(prev => [...prev, ...newProducts]);
       }
       setHasMore(more);
-      setPage(pageNum);
     } catch (error) {
       console.error('Failed to fetch products:', error);
       showSnackbar('商品の読み込みに失敗しました', 'error');
@@ -178,37 +178,28 @@ export default function AdminProductsPage() {
     return result;
   }, [products, filters]);
 
-  const loadMore = useCallback(() => {
-    if (!isLoadingMore && hasMore) {
-      fetchProducts(page + 1, false);
-    }
-  }, [isLoadingMore, hasMore, page]);
-
   // Intersection Observer for infinite scroll
   useEffect(() => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
-          loadMore();
+          setPage(prevPage => {
+            fetchProducts(prevPage + 1, false);
+            return prevPage + 1;
+          });
         }
       },
       { threshold: 0.1 }
     );
 
     if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current);
+      observer.observe(loadMoreRef.current);
     }
 
     return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
+      observer.disconnect();
     };
-  }, [loadMore, hasMore, isLoadingMore, isLoading]);
+  }, [hasMore, isLoadingMore, isLoading]);
 
   const handleOpenCreateDialog = () => {
     setDialogMode('create');

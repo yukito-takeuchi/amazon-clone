@@ -48,8 +48,11 @@ export interface ProductFilters {
   maxPrice?: number;
   search?: string;
   isActive?: boolean;
+  stockStatus?: 'in_stock' | 'out_of_stock';
   page?: number;
   limit?: number;
+  sortBy?: 'created_at' | 'price' | 'stock' | 'name';
+  sortOrder?: 'asc' | 'desc';
 }
 
 export class ProductModel {
@@ -125,43 +128,62 @@ export class ProductModel {
     let paramCount = 1;
 
     if (filters.categoryId) {
-      conditions.push(`category_id = $${paramCount}`);
+      conditions.push(`p.category_id = $${paramCount}`);
       values.push(filters.categoryId);
       paramCount++;
     }
 
     if (filters.minPrice !== undefined) {
-      conditions.push(`price >= $${paramCount}`);
+      conditions.push(`p.price >= $${paramCount}`);
       values.push(filters.minPrice);
       paramCount++;
     }
 
     if (filters.maxPrice !== undefined) {
-      conditions.push(`price <= $${paramCount}`);
+      conditions.push(`p.price <= $${paramCount}`);
       values.push(filters.maxPrice);
       paramCount++;
     }
 
     if (filters.search) {
-      conditions.push(`(name ILIKE $${paramCount} OR description ILIKE $${paramCount})`);
+      conditions.push(`(p.name ILIKE $${paramCount} OR p.description ILIKE $${paramCount})`);
       values.push(`%${filters.search}%`);
       paramCount++;
     }
 
     if (filters.isActive !== undefined) {
-      conditions.push(`is_active = $${paramCount}`);
+      conditions.push(`p.is_active = $${paramCount}`);
       values.push(filters.isActive);
       paramCount++;
+    }
+
+    if (filters.stockStatus) {
+      if (filters.stockStatus === 'in_stock') {
+        conditions.push(`p.stock > 0`);
+      } else if (filters.stockStatus === 'out_of_stock') {
+        conditions.push(`p.stock = 0`);
+      }
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Get total count
     const countResult = await pool.query(
-      `SELECT COUNT(*) FROM products ${whereClause}`,
+      `SELECT COUNT(*) FROM products p ${whereClause}`,
       values
     );
     const total = parseInt(countResult.rows[0].count);
+
+    // Build ORDER BY clause
+    const sortBy = filters.sortBy || 'created_at';
+    const sortOrder = filters.sortOrder || 'desc';
+
+    // Validate sortBy to prevent SQL injection
+    const validSortColumns = ['created_at', 'price', 'stock', 'name'];
+    const sortColumn = validSortColumns.includes(sortBy) ? sortBy : 'created_at';
+    const sortDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+    const orderByClause = `ORDER BY p.${sortColumn} ${sortDirection}`;
 
     // Get paginated products
     const limit = filters.limit || 20;
@@ -171,7 +193,7 @@ export class ProductModel {
     const result = await pool.query(
       `SELECT p.*,
         (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1) as image_url
-       FROM products p ${whereClause} ORDER BY p.created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`,
+       FROM products p ${whereClause} ${orderByClause} LIMIT $${paramCount} OFFSET $${paramCount + 1}`,
       [...values, limit, offset]
     );
 
