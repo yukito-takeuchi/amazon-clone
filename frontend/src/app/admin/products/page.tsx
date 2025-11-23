@@ -126,7 +126,7 @@ export default function AdminProductsPage() {
 
     // Filter by category
     if (filters.categoryId !== 'all') {
-      result = result.filter(p => p.categoryId === parseInt(filters.categoryId));
+      result = result.filter(p => p.categoryId.toString() === filters.categoryId);
     }
 
     // Filter by status
@@ -277,7 +277,7 @@ export default function AdminProductsPage() {
                 >
                   <MenuItem value="all">全て</MenuItem>
                   {categories.map((cat) => (
-                    <MenuItem key={cat.id} value={cat.id}>
+                    <MenuItem key={cat.id} value={cat.id.toString()}>
                       {cat.name}
                     </MenuItem>
                   ))}
