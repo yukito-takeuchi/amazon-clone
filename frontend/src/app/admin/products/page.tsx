@@ -60,7 +60,7 @@ export default function AdminProductsPage() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [filters, setFilters] = useState<Filters>({
-    categoryId: '',
+    categoryId: 'all',
     status: 'all',
     stockStatus: 'all',
     search: '',
@@ -125,7 +125,7 @@ export default function AdminProductsPage() {
     let result = [...products];
 
     // Filter by category
-    if (filters.categoryId) {
+    if (filters.categoryId !== 'all') {
       result = result.filter(p => p.categoryId === parseInt(filters.categoryId));
     }
 
@@ -275,7 +275,7 @@ export default function AdminProductsPage() {
                   label="カテゴリ"
                   onChange={(e) => setFilters({ ...filters, categoryId: e.target.value })}
                 >
-                  <MenuItem value="">全て</MenuItem>
+                  <MenuItem value="all">全て</MenuItem>
                   {categories.map((cat) => (
                     <MenuItem key={cat.id} value={cat.id}>
                       {cat.name}
