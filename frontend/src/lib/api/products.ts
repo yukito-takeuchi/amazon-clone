@@ -39,8 +39,10 @@ export const productsApi = {
 
     const response = await apiClient.get(`/products?${params.toString()}`);
     return {
-      ...response.data,
       products: response.data.products.map(transformProduct),
+      total: response.data.pagination?.total || response.data.total || 0,
+      page: response.data.pagination?.page || response.data.page || 1,
+      totalPages: response.data.pagination?.totalPages || response.data.totalPages || 1,
     };
   },
 
