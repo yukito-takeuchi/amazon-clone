@@ -80,13 +80,6 @@ export default function AdminProductsPage() {
     }
   }, [isAuthenticated, authLoading, user, router]);
 
-  // Refetch when filters change
-  useEffect(() => {
-    if (user?.isAdmin) {
-      fetchProducts(1, true);
-    }
-  }, [filters]);
-
   const fetchCategories = async () => {
     try {
       const data = await adminApi.getCategories();
