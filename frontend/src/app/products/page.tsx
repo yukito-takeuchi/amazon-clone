@@ -272,12 +272,23 @@ function ProductsPageContent() {
               </Box>
 
               {/* 無限スクロール用の監視要素 */}
-              <div ref={loadMoreRef} style={{ height: '20px', margin: '20px 0' }} />
+              {hasMore && (
+                <div ref={loadMoreRef} style={{ height: '20px', margin: '20px 0' }} />
+              )}
 
               {/* ローディング表示 */}
               {isLoadingMore && (
                 <Box sx={{ textAlign: "center", py: 4 }}>
                   <Typography sx={{ color: "#6B7280" }}>読み込み中...</Typography>
+                </Box>
+              )}
+
+              {/* デバッグ情報 */}
+              {!hasMore && products.length > 0 && (
+                <Box sx={{ textAlign: "center", py: 2 }}>
+                  <Typography sx={{ color: "#9CA3AF", fontSize: 14 }}>
+                    全ての商品を表示しました
+                  </Typography>
                 </Box>
               )}
             </>
