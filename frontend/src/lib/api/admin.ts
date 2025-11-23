@@ -123,12 +123,35 @@ export const adminApi = {
     return transformProduct(response.data.product);
   },
 
-  getAllProducts: async (page: number = 1, limit: number = 20): Promise<{ products: Product[]; hasMore: boolean }> => {
-    const response = await apiClient.get(`/admin/products?page=${page}&limit=${limit}`);
+  getAllProducts: async (
+    page: number = 1,
+    limit: number = 20,
+    filters?: {
+      categoryId?: string;
+      status?: string;
+      stockStatus?: string;
+      search?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    }
+  ): Promise<{ products: Product[]; total: number; hasMore: boolean }> => {
+    // Build query parameters
+    const params = new URLSearchParams();
+    params.append('page', String(page));
+    params.append('limit', String(limit));
+
+    if (filters?.categoryId) params.append('categoryId', filters.categoryId);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.stockStatus) params.append('stockStatus', filters.stockStatus);
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
+
+    const response = await apiClient.get(`/admin/products?${params.toString()}`);
     const products = response.data.products.map(transformProduct);
-    const { pagination } = response.data;
-    const hasMore = pagination ? pagination.page < pagination.totalPages : false;
-    return { products, hasMore };
+    const total = response.data.total || 0;
+    const hasMore = response.data.hasMore || false;
+    return { products, total, hasMore };
   },
 
   // Multiple Images

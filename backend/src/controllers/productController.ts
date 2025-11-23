@@ -15,6 +15,8 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
       search,
       page = '1',
       limit = '20',
+      sortBy = 'created_at',
+      sortOrder = 'desc',
     } = req.query;
 
     const filters = {
@@ -25,6 +27,8 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
       isActive: true, // Only show active products to public
       page: parseInt(page as string),
       limit: parseInt(limit as string),
+      sortBy: sortBy as 'created_at' | 'price' | 'stock' | 'name',
+      sortOrder: sortOrder as 'asc' | 'desc',
     };
 
     const { products, total } = await ProductModel.findAll(filters);

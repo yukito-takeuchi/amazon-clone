@@ -59,6 +59,7 @@ export default function AdminProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const initialLoadRef = useRef(false);
   const [filters, setFilters] = useState<Filters>({
     categoryId: 'all',
     status: 'all',
@@ -74,18 +75,12 @@ export default function AdminProductsPage() {
     } else if (!authLoading && user && !user.isAdmin) {
       showSnackbar('管理者権限が必要です', 'error');
       router.push('/');
-    } else if (user?.isAdmin) {
+    } else if (user?.isAdmin && !initialLoadRef.current) {
+      initialLoadRef.current = true;
       fetchCategories();
       fetchProducts(1, true);
     }
   }, [isAuthenticated, authLoading, user, router]);
-
-  // Refetch when filters change
-  useEffect(() => {
-    if (user?.isAdmin) {
-      fetchProducts(1, true);
-    }
-  }, [filters]);
 
   const fetchCategories = async () => {
     try {
@@ -99,18 +94,29 @@ export default function AdminProductsPage() {
   const fetchProducts = async (pageNum: number, reset: boolean = false) => {
     if (reset) {
       setIsLoading(true);
+      setPage(1);
     } else {
       setIsLoadingMore(true);
     }
     try {
-      const { products: newProducts, hasMore: more } = await adminApi.getAllProducts(pageNum, ITEMS_PER_PAGE);
+      const { products: newProducts, hasMore: more } = await adminApi.getAllProducts(
+        pageNum,
+        ITEMS_PER_PAGE,
+        {
+          categoryId: filters.categoryId !== 'all' ? filters.categoryId : undefined,
+          status: filters.status !== 'all' ? filters.status : undefined,
+          stockStatus: filters.stockStatus !== 'all' ? filters.stockStatus : undefined,
+          search: filters.search || undefined,
+          sortBy: filters.sortBy,
+          sortOrder: filters.sortOrder,
+        }
+      );
       if (reset) {
         setProducts(newProducts);
       } else {
         setProducts(prev => [...prev, ...newProducts]);
       }
       setHasMore(more);
-      setPage(pageNum);
     } catch (error) {
       console.error('Failed to fetch products:', error);
       showSnackbar('商品の読み込みに失敗しました', 'error');
@@ -120,102 +126,35 @@ export default function AdminProductsPage() {
     }
   };
 
-  // Apply filters and sorting to products
-  const filteredAndSortedProducts = React.useMemo(() => {
-    let result = [...products];
-
-    // Filter by category
-    if (filters.categoryId !== 'all') {
-      result = result.filter(p => p.categoryId.toString() === filters.categoryId);
+  // Refetch products when filters change
+  useEffect(() => {
+    if (user?.isAdmin) {
+      fetchProducts(1, true);
     }
-
-    // Filter by status
-    if (filters.status !== 'all') {
-      const isActive = filters.status === 'active';
-      result = result.filter(p => p.isActive === isActive);
-    }
-
-    // Filter by stock status
-    if (filters.stockStatus !== 'all') {
-      const hasStock = filters.stockStatus === 'in_stock';
-      result = result.filter(p => hasStock ? p.stock > 0 : p.stock === 0);
-    }
-
-    // Filter by search
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(searchLower) ||
-        p.description.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Sort
-    result.sort((a, b) => {
-      let aVal: any, bVal: any;
-
-      switch (filters.sortBy) {
-        case 'created_at':
-          aVal = new Date(a.createdAt).getTime();
-          bVal = new Date(b.createdAt).getTime();
-          break;
-        case 'price':
-          aVal = a.price;
-          bVal = b.price;
-          break;
-        case 'stock':
-          aVal = a.stock;
-          bVal = b.stock;
-          break;
-        case 'name':
-          aVal = a.name.toLowerCase();
-          bVal = b.name.toLowerCase();
-          break;
-        default:
-          return 0;
-      }
-
-      if (filters.sortOrder === 'asc') {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
-    });
-
-    return result;
-  }, [products, filters]);
-
-  const loadMore = useCallback(() => {
-    if (!isLoadingMore && hasMore) {
-      fetchProducts(page + 1, false);
-    }
-  }, [isLoadingMore, hasMore, page]);
+  }, [filters]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
-          loadMore();
+          setPage(prevPage => {
+            fetchProducts(prevPage + 1, false);
+            return prevPage + 1;
+          });
         }
       },
       { threshold: 0.1 }
     );
 
     if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current);
+      observer.observe(loadMoreRef.current);
     }
 
     return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
+      observer.disconnect();
     };
-  }, [loadMore, hasMore, isLoadingMore, isLoading]);
+  }, [hasMore, isLoadingMore, isLoading]);
 
   const handleOpenCreateDialog = () => {
     setDialogMode('create');
@@ -321,9 +260,13 @@ export default function AdminProductsPage() {
                 <Select
                   value={`${filters.sortBy}_${filters.sortOrder}`}
                   label="並び順"
+                  displayEmpty
                   onChange={(e) => {
-                    const [sortBy, sortOrder] = e.target.value.split('_');
-                    setFilters({ ...filters, sortBy, sortOrder: sortOrder as 'asc' | 'desc' });
+                    const value = e.target.value;
+                    const lastUnderscoreIndex = value.lastIndexOf('_');
+                    const sortBy = value.substring(0, lastUnderscoreIndex);
+                    const sortOrder = value.substring(lastUnderscoreIndex + 1) as 'asc' | 'desc';
+                    setFilters({ ...filters, sortBy, sortOrder });
                   }}
                 >
                   <MenuItem value="created_at_desc">追加日: 新しい順</MenuItem>
@@ -361,16 +304,11 @@ export default function AdminProductsPage() {
           <Box sx={{ textAlign: 'center', py: 10 }}>
             <Typography sx={{ color: '#6B7280' }}>読み込み中...</Typography>
           </Box>
-        ) : filteredAndSortedProducts.length === 0 ? (
+        ) : products.length === 0 ? (
           <Paper sx={{ p: 4, textAlign: 'center' }}>
             <Typography sx={{ color: '#6B7280', mb: 2 }}>
-              {products.length === 0 ? '商品がまだ登録されていません' : '該当する商品が見つかりませんでした'}
+              商品が見つかりませんでした
             </Typography>
-            {products.length === 0 && (
-              <Link href="/admin/products/new">
-                <Button variant="primary">最初の商品を追加</Button>
-              </Link>
-            )}
           </Paper>
         ) : (
           <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)' }}>
@@ -387,7 +325,7 @@ export default function AdminProductsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredAndSortedProducts.map((product) => {
+                {products.map((product) => {
                   // Handle imageUrl - backend returns full URL
                   let imageUrl = null;
                   if (product.imageUrl) {

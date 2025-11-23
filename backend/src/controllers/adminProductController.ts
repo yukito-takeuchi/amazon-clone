@@ -16,12 +16,43 @@ const upload = multer({ storage: multer.memoryStorage() });
  */
 export const getAllProducts = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { page = '1', limit = '50' } = req.query;
+    const {
+      page = '1',
+      limit = '20',
+      categoryId,
+      status,
+      stockStatus,
+      search,
+      sortBy = 'created_at',
+      sortOrder = 'desc',
+    } = req.query;
 
-    const filters = {
+    const filters: any = {
       page: parseInt(page as string),
       limit: parseInt(limit as string),
+      sortBy: sortBy as string,
+      sortOrder: sortOrder as 'asc' | 'desc',
     };
+
+    // Add category filter
+    if (categoryId && categoryId !== 'all') {
+      filters.categoryId = parseInt(categoryId as string);
+    }
+
+    // Add status filter
+    if (status && status !== 'all') {
+      filters.isActive = status === 'active';
+    }
+
+    // Add stock status filter
+    if (stockStatus && stockStatus !== 'all') {
+      filters.stockStatus = stockStatus as 'in_stock' | 'out_of_stock';
+    }
+
+    // Add search filter
+    if (search && search !== '') {
+      filters.search = search as string;
+    }
 
     const { products, total } = await ProductModel.findAll(filters);
 
@@ -44,14 +75,15 @@ export const getAllProducts = async (req: AuthRequest, res: Response): Promise<v
       })
     );
 
+    const totalPages = Math.ceil(total / filters.limit);
+    const hasMore = filters.page < totalPages;
+
     res.json({
       products: productsWithImages,
-      pagination: {
-        total,
-        page: filters.page,
-        limit: filters.limit,
-        totalPages: Math.ceil(total / filters.limit),
-      },
+      total,
+      page: filters.page,
+      totalPages,
+      hasMore,
     });
   } catch (error) {
     console.error('Get all products error:', error);
