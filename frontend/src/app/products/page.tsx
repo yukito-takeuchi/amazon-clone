@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Box, Typography, Paper } from "@mui/material";
+import { Box, Typography, Paper, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { productsApi } from "@/lib/api/products";
 import { cartApi } from "@/lib/api/cart";
 import { Product } from "@/types/product";
@@ -25,6 +25,7 @@ function ProductsPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [sortBy, setSortBy] = useState<string>('created_at_desc');
 
   // 現在の検索条件における価格範囲（検索・カテゴリ変更時に更新）
   const [currentMinPrice, setCurrentMinPrice] = useState<number>(0);
@@ -36,7 +37,7 @@ function ProductsPageContent() {
 
   useEffect(() => {
     fetchProducts();
-  }, [page, searchParams]);
+  }, [page, searchParams, sortBy]);
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -46,6 +47,11 @@ function ProductsPageContent() {
       const searchQuery = searchParams.get("search") || null;
       const categoryId = searchParams.get("category") || null;
 
+      // ソート条件を分解
+      const lastUnderscoreIndex = sortBy.lastIndexOf('_');
+      const sortField = sortBy.substring(0, lastUnderscoreIndex);
+      const sortDirection = sortBy.substring(lastUnderscoreIndex + 1) as 'asc' | 'desc';
+
       const filters = {
         search: searchQuery || undefined,
         categoryId: categoryId || undefined,
@@ -53,6 +59,8 @@ function ProductsPageContent() {
         maxPrice: maxPriceParam ? parseInt(maxPriceParam) : undefined,
         page,
         limit: 12,
+        sortBy: sortField as 'created_at' | 'price' | 'stock' | 'name',
+        sortOrder: sortDirection,
       };
 
       const response = await productsApi.getAll(filters);
@@ -137,12 +145,31 @@ function ProductsPageContent() {
         >
           {/* 検索結果ヘッダー */}
           <Box sx={{ mb: 3 }}>
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 700, color: "#111827", mb: 2 }}
-            >
-              {currentSearch ? `"${currentSearch}" の検索結果` : "商品一覧"}
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "#111827" }}
+              >
+                {currentSearch ? `"${currentSearch}" の検索結果` : "商品一覧"}
+              </Typography>
+
+              {/* ソート */}
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>並び順</InputLabel>
+                <Select
+                  value={sortBy}
+                  label="並び順"
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <MenuItem value="created_at_desc">新着順</MenuItem>
+                  <MenuItem value="created_at_asc">古い順</MenuItem>
+                  <MenuItem value="price_asc">価格: 安い順</MenuItem>
+                  <MenuItem value="price_desc">価格: 高い順</MenuItem>
+                  <MenuItem value="name_asc">商品名: A-Z</MenuItem>
+                  <MenuItem value="name_desc">商品名: Z-A</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
             {!isLoading && products.length > 0 && (
               <Typography sx={{ fontSize: 14, color: "#6B7280" }}>
                 {products.length} 件の結果

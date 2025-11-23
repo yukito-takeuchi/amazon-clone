@@ -32,4 +32,6 @@ export interface ProductFilters {
   inStock?: boolean;
   page?: number;
   limit?: number;
+  sortBy?: 'created_at' | 'price' | 'stock' | 'name';
+  sortOrder?: 'asc' | 'desc';
 }
