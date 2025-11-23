@@ -323,8 +323,11 @@ export default function AdminProductsPage() {
                   label="並び順"
                   displayEmpty
                   onChange={(e) => {
-                    const [sortBy, sortOrder] = e.target.value.split('_');
-                    setFilters({ ...filters, sortBy, sortOrder: sortOrder as 'asc' | 'desc' });
+                    const value = e.target.value;
+                    const lastUnderscoreIndex = value.lastIndexOf('_');
+                    const sortBy = value.substring(0, lastUnderscoreIndex);
+                    const sortOrder = value.substring(lastUnderscoreIndex + 1) as 'asc' | 'desc';
+                    setFilters({ ...filters, sortBy, sortOrder });
                   }}
                 >
                   <MenuItem value="created_at_desc">追加日: 新しい順</MenuItem>
