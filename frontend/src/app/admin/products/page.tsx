@@ -126,7 +126,7 @@ export default function AdminProductsPage() {
 
     // Filter by category
     if (filters.categoryId) {
-      result = result.filter(p => p.categoryId === filters.categoryId);
+      result = result.filter(p => p.categoryId === parseInt(filters.categoryId));
     }
 
     // Filter by status
