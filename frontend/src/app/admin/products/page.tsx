@@ -59,6 +59,7 @@ export default function AdminProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const initialLoadRef = useRef(false);
   const [filters, setFilters] = useState<Filters>({
     categoryId: 'all',
     status: 'all',
@@ -74,7 +75,8 @@ export default function AdminProductsPage() {
     } else if (!authLoading && user && !user.isAdmin) {
       showSnackbar('管理者権限が必要です', 'error');
       router.push('/');
-    } else if (user?.isAdmin) {
+    } else if (user?.isAdmin && !initialLoadRef.current) {
+      initialLoadRef.current = true;
       fetchCategories();
       fetchProducts(1, true);
     }
@@ -97,7 +99,18 @@ export default function AdminProductsPage() {
       setIsLoadingMore(true);
     }
     try {
-      const { products: newProducts, hasMore: more } = await adminApi.getAllProducts(pageNum, ITEMS_PER_PAGE);
+      const { products: newProducts, hasMore: more } = await adminApi.getAllProducts(
+        pageNum,
+        ITEMS_PER_PAGE,
+        {
+          categoryId: filters.categoryId !== 'all' ? filters.categoryId : undefined,
+          status: filters.status !== 'all' ? filters.status : undefined,
+          stockStatus: filters.stockStatus !== 'all' ? filters.stockStatus : undefined,
+          search: filters.search || undefined,
+          sortBy: filters.sortBy,
+          sortOrder: filters.sortOrder,
+        }
+      );
       if (reset) {
         setProducts(newProducts);
       } else {
@@ -113,70 +126,12 @@ export default function AdminProductsPage() {
     }
   };
 
-  // Apply filters and sorting to products
-  const filteredAndSortedProducts = React.useMemo(() => {
-    let result = [...products];
-
-    // Filter by category
-    if (filters.categoryId !== 'all') {
-      result = result.filter(p => p.categoryId.toString() === filters.categoryId);
+  // Refetch products when filters change
+  useEffect(() => {
+    if (user?.isAdmin) {
+      fetchProducts(1, true);
     }
-
-    // Filter by status
-    if (filters.status !== 'all') {
-      const isActive = filters.status === 'active';
-      result = result.filter(p => p.isActive === isActive);
-    }
-
-    // Filter by stock status
-    if (filters.stockStatus !== 'all') {
-      const hasStock = filters.stockStatus === 'in_stock';
-      result = result.filter(p => hasStock ? p.stock > 0 : p.stock === 0);
-    }
-
-    // Filter by search
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(searchLower) ||
-        p.description.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Sort
-    result.sort((a, b) => {
-      let aVal: any, bVal: any;
-
-      switch (filters.sortBy) {
-        case 'created_at':
-          aVal = new Date(a.createdAt).getTime();
-          bVal = new Date(b.createdAt).getTime();
-          break;
-        case 'price':
-          aVal = a.price;
-          bVal = b.price;
-          break;
-        case 'stock':
-          aVal = a.stock;
-          bVal = b.stock;
-          break;
-        case 'name':
-          aVal = a.name.toLowerCase();
-          bVal = b.name.toLowerCase();
-          break;
-        default:
-          return 0;
-      }
-
-      if (filters.sortOrder === 'asc') {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
-    });
-
-    return result;
-  }, [products, filters]);
+  }, [filters]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -349,16 +304,11 @@ export default function AdminProductsPage() {
           <Box sx={{ textAlign: 'center', py: 10 }}>
             <Typography sx={{ color: '#6B7280' }}>読み込み中...</Typography>
           </Box>
-        ) : filteredAndSortedProducts.length === 0 ? (
+        ) : products.length === 0 ? (
           <Paper sx={{ p: 4, textAlign: 'center' }}>
             <Typography sx={{ color: '#6B7280', mb: 2 }}>
-              {products.length === 0 ? '商品がまだ登録されていません' : '該当する商品が見つかりませんでした'}
+              商品が見つかりませんでした
             </Typography>
-            {products.length === 0 && (
-              <Link href="/admin/products/new">
-                <Button variant="primary">最初の商品を追加</Button>
-              </Link>
-            )}
           </Paper>
         ) : (
           <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)' }}>
@@ -375,7 +325,7 @@ export default function AdminProductsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredAndSortedProducts.map((product) => {
+                {products.map((product) => {
                   // Handle imageUrl - backend returns full URL
                   let imageUrl = null;
                   if (product.imageUrl) {
