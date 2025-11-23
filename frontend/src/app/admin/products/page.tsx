@@ -321,6 +321,7 @@ export default function AdminProductsPage() {
                 <Select
                   value={`${filters.sortBy}_${filters.sortOrder}`}
                   label="並び順"
+                  displayEmpty
                   onChange={(e) => {
                     const [sortBy, sortOrder] = e.target.value.split('_');
                     setFilters({ ...filters, sortBy, sortOrder: sortOrder as 'asc' | 'desc' });
