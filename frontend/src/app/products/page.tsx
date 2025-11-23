@@ -26,6 +26,7 @@ function ProductsPageContent() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [total, setTotal] = useState(0);
   const [sortBy, setSortBy] = useState<string>('created_at_desc');
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -86,9 +87,7 @@ function ProductsPageContent() {
         sortOrder: sortDirection,
       };
 
-      console.log('Fetching with filters:', filters);
       const response = await productsApi.getAll(filters);
-      console.log('Response:', { products: response.products.length, totalPages: response.totalPages });
 
       if (reset) {
         setProducts(response.products);
@@ -96,9 +95,10 @@ function ProductsPageContent() {
         setProducts(prev => [...prev, ...response.products]);
       }
 
+      setTotal(response.total || 0);
       const totalPages = response.totalPages || 1;
       const hasMorePages = pageNum < totalPages;
-      console.log('Setting hasMore:', hasMorePages, 'page:', pageNum, 'totalPages:', totalPages);
+      console.log('Page', pageNum, '/', totalPages, '- hasMore:', hasMorePages);
       setHasMore(hasMorePages);
 
       // 検索クエリまたはカテゴリが変更された場合のみ価格範囲を更新
@@ -231,7 +231,7 @@ function ProductsPageContent() {
             </Box>
             {!isLoading && products.length > 0 && (
               <Typography sx={{ fontSize: 14, color: "#6B7280" }}>
-                {products.length} 件の結果
+                全 {total} 件中 {products.length} 件を表示
               </Typography>
             )}
           </Box>
