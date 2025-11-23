@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Box, Typography, Paper, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { productsApi } from "@/lib/api/products";
@@ -23,9 +23,13 @@ function ProductsPageContent() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [sortBy, setSortBy] = useState<string>('created_at_desc');
+
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const initialLoadRef = useRef(false);
 
   // 現在の検索条件における価格範囲（検索・カテゴリ変更時に更新）
   const [currentMinPrice, setCurrentMinPrice] = useState<number>(0);
@@ -35,12 +39,31 @@ function ProductsPageContent() {
   const [prevSearch, setPrevSearch] = useState<string | null>(null);
   const [prevCategory, setPrevCategory] = useState<string | null>(null);
 
+  // 初回読み込み
   useEffect(() => {
-    fetchProducts();
-  }, [page, searchParams, sortBy]);
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
+      fetchProducts(1, true);
+    }
+  }, []);
 
-  const fetchProducts = async () => {
-    setIsLoading(true);
+  // フィルタ・ソート変更時
+  useEffect(() => {
+    if (initialLoadRef.current) {
+      fetchProducts(1, true);
+    }
+  }, [searchParams, sortBy]);
+
+  const fetchProducts = async (pageNum: number, reset: boolean = false) => {
+    console.log('fetchProducts called:', { pageNum, reset });
+
+    if (reset) {
+      setIsLoading(true);
+      setPage(1);
+    } else {
+      setIsLoadingMore(true);
+    }
+
     try {
       const minPriceParam = searchParams.get("minPrice");
       const maxPriceParam = searchParams.get("maxPrice");
@@ -57,15 +80,26 @@ function ProductsPageContent() {
         categoryId: categoryId || undefined,
         minPrice: minPriceParam ? parseInt(minPriceParam) : undefined,
         maxPrice: maxPriceParam ? parseInt(maxPriceParam) : undefined,
-        page,
+        page: pageNum,
         limit: 12,
         sortBy: sortField as 'created_at' | 'price' | 'stock' | 'name',
         sortOrder: sortDirection,
       };
 
+      console.log('Fetching with filters:', filters);
       const response = await productsApi.getAll(filters);
-      setProducts(response.products);
-      setTotalPages(response.totalPages);
+      console.log('Response:', { products: response.products.length, totalPages: response.totalPages });
+
+      if (reset) {
+        setProducts(response.products);
+      } else {
+        setProducts(prev => [...prev, ...response.products]);
+      }
+
+      const totalPages = response.totalPages || 1;
+      const hasMorePages = pageNum < totalPages;
+      console.log('Setting hasMore:', hasMorePages, 'page:', pageNum, 'totalPages:', totalPages);
+      setHasMore(hasMorePages);
 
       // 検索クエリまたはカテゴリが変更された場合のみ価格範囲を更新
       const searchChanged = searchQuery !== prevSearch;
@@ -91,8 +125,33 @@ function ProductsPageContent() {
       console.error("Failed to fetch products:", error);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const handleIntersect = (entries: IntersectionObserverEntry[]) => {
+      if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
+        setPage(prevPage => {
+          const nextPage = prevPage + 1;
+          console.log('Loading page:', nextPage, 'hasMore:', hasMore);
+          fetchProducts(nextPage, false);
+          return nextPage;
+        });
+      }
+    };
+
+    const observer = new IntersectionObserver(handleIntersect, { threshold: 0.1 });
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasMore, isLoadingMore, isLoading, searchParams, sortBy]);
 
   const handleAddToCart = async (productId: string) => {
     if (!isAuthenticated) {
@@ -212,35 +271,13 @@ function ProductsPageContent() {
                 ))}
               </Box>
 
-              {/* ページネーション */}
-              {totalPages > 1 && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: 2,
-                    mt: 4,
-                  }}
-                >
-                  <Button
-                    variant="outline"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                  >
-                    前へ
-                  </Button>
-                  <Box sx={{ display: "flex", alignItems: "center", px: 2 }}>
-                    <Typography>
-                      {page} / {totalPages}
-                    </Typography>
-                  </Box>
-                  <Button
-                    variant="outline"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages}
-                  >
-                    次へ
-                  </Button>
+              {/* 無限スクロール用の監視要素 */}
+              <div ref={loadMoreRef} style={{ height: '20px', margin: '20px 0' }} />
+
+              {/* ローディング表示 */}
+              {isLoadingMore && (
+                <Box sx={{ textAlign: "center", py: 4 }}>
+                  <Typography sx={{ color: "#6B7280" }}>読み込み中...</Typography>
                 </Box>
               )}
             </>
