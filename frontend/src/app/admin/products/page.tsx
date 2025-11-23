@@ -16,7 +16,15 @@ import {
   Box,
   Typography,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  InputAdornment,
+  Grid,
 } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import { useAuthStore } from '@/store/authStore';
 import { adminApi } from '@/lib/api/admin';
 import { Product } from '@/types/product';
@@ -27,11 +35,21 @@ import { FiEdit, FiPlus } from 'react-icons/fi';
 
 const ITEMS_PER_PAGE = 20;
 
+interface Filters {
+  categoryId: string;
+  status: string;
+  stockStatus: string;
+  search: string;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+}
+
 export default function AdminProductsPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
   const { showSnackbar, SnackbarComponent } = useSnackbar();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -41,6 +59,14 @@ export default function AdminProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const [filters, setFilters] = useState<Filters>({
+    categoryId: 'all',
+    status: 'all',
+    stockStatus: 'all',
+    search: '',
+    sortBy: 'created_at',
+    sortOrder: 'desc',
+  });
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -49,9 +75,26 @@ export default function AdminProductsPage() {
       showSnackbar('管理者権限が必要です', 'error');
       router.push('/');
     } else if (user?.isAdmin) {
+      fetchCategories();
       fetchProducts(1, true);
     }
   }, [isAuthenticated, authLoading, user, router]);
+
+  // Refetch when filters change
+  useEffect(() => {
+    if (user?.isAdmin) {
+      fetchProducts(1, true);
+    }
+  }, [filters]);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await adminApi.getCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    }
+  };
 
   const fetchProducts = async (pageNum: number, reset: boolean = false) => {
     if (reset) {
@@ -76,6 +119,71 @@ export default function AdminProductsPage() {
       setIsLoadingMore(false);
     }
   };
+
+  // Apply filters and sorting to products
+  const filteredAndSortedProducts = React.useMemo(() => {
+    let result = [...products];
+
+    // Filter by category
+    if (filters.categoryId !== 'all') {
+      result = result.filter(p => p.categoryId.toString() === filters.categoryId);
+    }
+
+    // Filter by status
+    if (filters.status !== 'all') {
+      const isActive = filters.status === 'active';
+      result = result.filter(p => p.isActive === isActive);
+    }
+
+    // Filter by stock status
+    if (filters.stockStatus !== 'all') {
+      const hasStock = filters.stockStatus === 'in_stock';
+      result = result.filter(p => hasStock ? p.stock > 0 : p.stock === 0);
+    }
+
+    // Filter by search
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      result = result.filter(p =>
+        p.name.toLowerCase().includes(searchLower) ||
+        p.description.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      let aVal: any, bVal: any;
+
+      switch (filters.sortBy) {
+        case 'created_at':
+          aVal = new Date(a.createdAt).getTime();
+          bVal = new Date(b.createdAt).getTime();
+          break;
+        case 'price':
+          aVal = a.price;
+          bVal = b.price;
+          break;
+        case 'stock':
+          aVal = a.stock;
+          bVal = b.stock;
+          break;
+        case 'name':
+          aVal = a.name.toLowerCase();
+          bVal = b.name.toLowerCase();
+          break;
+        default:
+          return 0;
+      }
+
+      if (filters.sortOrder === 'asc') {
+        return aVal > bVal ? 1 : -1;
+      } else {
+        return aVal < bVal ? 1 : -1;
+      }
+    });
+
+    return result;
+  }, [products, filters]);
 
   const loadMore = useCallback(() => {
     if (!isLoadingMore && hasMore) {
@@ -142,7 +250,7 @@ export default function AdminProductsPage() {
     <Box sx={{ minHeight: '100vh', bgcolor: '#F9FAFB' }}>
       <SnackbarComponent />
       <Box sx={{ maxWidth: 1400, mx: 'auto', px: 3, py: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#111827' }}>
             商品管理
           </Typography>
@@ -156,18 +264,113 @@ export default function AdminProductsPage() {
           </Button>
         </Box>
 
+        {/* Filters and Sorting */}
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>カテゴリ</InputLabel>
+                <Select
+                  value={filters.categoryId}
+                  label="カテゴリ"
+                  onChange={(e) => setFilters({ ...filters, categoryId: e.target.value })}
+                >
+                  <MenuItem value="all">全て</MenuItem>
+                  {categories.map((cat) => (
+                    <MenuItem key={cat.id} value={cat.id.toString()}>
+                      {cat.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>ステータス</InputLabel>
+                <Select
+                  value={filters.status}
+                  label="ステータス"
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                >
+                  <MenuItem value="all">全て</MenuItem>
+                  <MenuItem value="active">公開中</MenuItem>
+                  <MenuItem value="inactive">削除済み</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>在庫状態</InputLabel>
+                <Select
+                  value={filters.stockStatus}
+                  label="在庫状態"
+                  onChange={(e) => setFilters({ ...filters, stockStatus: e.target.value })}
+                >
+                  <MenuItem value="all">全て</MenuItem>
+                  <MenuItem value="in_stock">在庫あり</MenuItem>
+                  <MenuItem value="out_of_stock">在庫切れ</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>並び順</InputLabel>
+                <Select
+                  value={`${filters.sortBy}_${filters.sortOrder}`}
+                  label="並び順"
+                  onChange={(e) => {
+                    const [sortBy, sortOrder] = e.target.value.split('_');
+                    setFilters({ ...filters, sortBy, sortOrder: sortOrder as 'asc' | 'desc' });
+                  }}
+                >
+                  <MenuItem value="created_at_desc">追加日: 新しい順</MenuItem>
+                  <MenuItem value="created_at_asc">追加日: 古い順</MenuItem>
+                  <MenuItem value="price_desc">価格: 高い順</MenuItem>
+                  <MenuItem value="price_asc">価格: 安い順</MenuItem>
+                  <MenuItem value="stock_desc">在庫: 多い順</MenuItem>
+                  <MenuItem value="stock_asc">在庫: 少ない順</MenuItem>
+                  <MenuItem value="name_asc">商品名: A-Z</MenuItem>
+                  <MenuItem value="name_desc">商品名: Z-A</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="商品名・説明で検索"
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+          </Grid>
+        </Paper>
+
         {isLoading ? (
           <Box sx={{ textAlign: 'center', py: 10 }}>
             <Typography sx={{ color: '#6B7280' }}>読み込み中...</Typography>
           </Box>
-        ) : products.length === 0 ? (
+        ) : filteredAndSortedProducts.length === 0 ? (
           <Paper sx={{ p: 4, textAlign: 'center' }}>
             <Typography sx={{ color: '#6B7280', mb: 2 }}>
-              商品がまだ登録されていません
+              {products.length === 0 ? '商品がまだ登録されていません' : '該当する商品が見つかりませんでした'}
             </Typography>
-            <Link href="/admin/products/new">
-              <Button variant="primary">最初の商品を追加</Button>
-            </Link>
+            {products.length === 0 && (
+              <Link href="/admin/products/new">
+                <Button variant="primary">最初の商品を追加</Button>
+              </Link>
+            )}
           </Paper>
         ) : (
           <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)' }}>
@@ -184,7 +387,7 @@ export default function AdminProductsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {products.map((product) => {
+                {filteredAndSortedProducts.map((product) => {
                   // Handle imageUrl - backend returns full URL
                   let imageUrl = null;
                   if (product.imageUrl) {
