@@ -25,6 +25,7 @@ graph TB
     subgraph "Backend"
         D[Express.js<br/>REST API]
         E[PostgreSQL<br/>Database]
+        F2[FastAPI<br/>Recommendation]
     end
 
     subgraph "External Services"
@@ -43,16 +44,20 @@ graph TB
     A -->|Authentication| F
     A -->|Payment| G
     D -->|Query| E
+    D -->|ML Recommendation| F2
     D -->|Upload| H
     D -->|Send Email| I
     D -->|Verify Token| F
+    F2 -->|Analytics| E
     J -->|Container| D
     J -->|Container| E
+    J -->|Container| F2
     A -->|Deploy| K
 
     style A fill:#61dafb
     style D fill:#68a063
     style E fill:#336791
+    style F2 fill:#009688
     style F fill:#ffca28
     style G fill:#635bff
     style H fill:#4285f4
@@ -65,25 +70,153 @@ graph TB
 
 ## 🛠️ 使用技術
 
-### Frontend
-- **Next.js 14** (App Router, TypeScript)
-- **Material-UI (MUI)** - UIコンポーネント
-- **Zustand** - 状態管理
-- **Firebase SDK** - 認証
-- **Stripe.js** - 決済UI
-- **Axios** - API通信
+| カテゴリ | 技術 | 用途 |
+|---------|------|------|
+| **Frontend** | Next.js 14 (TypeScript) | App Router、SSR/SSG |
+| | Material-UI (MUI) | UIコンポーネント |
+| | Zustand | 状態管理 |
+| | Firebase SDK | 認証 |
+| | Stripe.js | 決済UI |
+| | Axios | API通信 |
+| **Backend** | Node.js + Express (TypeScript) | REST API |
+| | FastAPI (Python) | レコメンドエンジン |
+| | PostgreSQL | メインデータベース |
+| | Firebase Admin SDK | トークン検証 |
+| | Stripe SDK | 決済処理 |
+| | Google Cloud Storage | 画像ストレージ |
+| | Resend | メール送信 |
+| **Infrastructure** | Docker + Docker Compose | 開発環境 |
+| | Vercel | フロントエンドホスティング |
 
-### Backend
-- **Node.js + Express** (TypeScript)
-- **PostgreSQL** - データベース
-- **Firebase Admin SDK** - トークン検証
-- **Stripe SDK** - 決済処理
-- **Google Cloud Storage** - 画像保存
-- **Resend** - メール送信
+---
 
-### Infrastructure
-- **Docker & Docker Compose** - 開発環境
-- **Vercel** - フロントエンドホスティング
+## 🗄️ データベース設計（ER図）
+
+```mermaid
+erDiagram
+    users ||--o{ addresses : has
+    users ||--o{ carts : has
+    users ||--o{ orders : places
+    users ||--o{ reviews : writes
+    users ||--o{ product_views : views
+
+    categories ||--o{ products : contains
+
+    products ||--o{ product_images : has
+    products ||--o{ cart_items : in
+    products ||--o{ order_items : in
+    products ||--o{ reviews : has
+    products ||--o{ product_views : viewed
+
+    carts ||--o{ cart_items : contains
+
+    orders ||--o{ order_items : contains
+    orders }o--|| addresses : ships_to
+
+    reviews ||--o{ review_images : has
+
+    users {
+        uuid id PK
+        varchar firebase_uid UK
+        varchar email UK
+        varchar name
+        varchar avatar_url
+        boolean is_admin
+        timestamp created_at
+    }
+
+    categories {
+        serial id PK
+        varchar name UK
+        text description
+    }
+
+    products {
+        serial id PK
+        varchar name
+        text description
+        integer price
+        integer stock
+        integer category_id FK
+        boolean is_active
+        timestamp created_at
+    }
+
+    product_images {
+        serial id PK
+        integer product_id FK
+        varchar image_url
+        integer display_order
+        boolean is_main
+    }
+
+    addresses {
+        serial id PK
+        uuid user_id FK
+        varchar postal_code
+        varchar prefecture
+        varchar city
+        varchar address_line
+        varchar phone_number
+        boolean is_default
+    }
+
+    carts {
+        serial id PK
+        uuid user_id FK UK
+    }
+
+    cart_items {
+        serial id PK
+        integer cart_id FK
+        integer product_id FK
+        integer quantity
+    }
+
+    orders {
+        serial id PK
+        uuid user_id FK
+        integer address_id FK
+        integer total_amount
+        enum status
+        varchar payment_method
+        varchar stripe_session_id
+        timestamp created_at
+    }
+
+    order_items {
+        serial id PK
+        integer order_id FK
+        integer product_id FK
+        integer quantity
+        integer price
+    }
+
+    reviews {
+        serial id PK
+        integer product_id FK
+        uuid user_id FK
+        integer rating
+        varchar title
+        text comment
+        timestamp created_at
+    }
+
+    review_images {
+        serial id PK
+        integer review_id FK
+        varchar image_url
+        integer display_order
+    }
+
+    product_views {
+        serial id PK
+        varchar user_id
+        integer product_id FK
+        integer view_count
+        timestamp viewed_at
+    }
+```
 
 ---
 
@@ -143,6 +276,16 @@ graph TB
 ### 6. TypeScript型安全性
 - フロントエンド・バックエンド全体でTypeScript使用
 - 厳密な型定義による開発効率向上
+
+### 7. Seedデータによる開発環境整備
+- **カテゴリマスタ**: 10カテゴリ（Electronics、Books、Clothing等）
+- **商品データ**: 各カテゴリ50件、合計500件の商品
+- **テストユーザー**: 複数のユーザーアカウント
+- **注文履歴**: ダミー注文データ
+- **レビューデータ**: 商品レビューとレーティング
+- **閲覧履歴**: レコメンドシステムテスト用データ
+
+これにより、開発初期段階から実環境に近い状態でテスト可能
 
 ---
 
