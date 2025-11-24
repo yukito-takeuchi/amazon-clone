@@ -16,4 +16,7 @@ router.get('/similar/:productId', optionalAuthMiddleware, RecommendationControll
 // Get popular products (no auth required)
 router.get('/popular', optionalAuthMiddleware, RecommendationController.getPopularProducts);
 
+// Get frequently viewed products (requires auth)
+router.get('/frequently-viewed', authMiddleware, RecommendationController.getFrequentlyViewed);
+
 export default router;

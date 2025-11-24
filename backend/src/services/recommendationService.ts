@@ -162,4 +162,45 @@ export class RecommendationService {
     const recommendations = await this.getPopularProductsList(limit);
     return { recommendations, source: 'popular' };
   }
+
+  static async getFrequentlyViewedProducts(
+    userId: string,
+    limit: number = 10,
+    days: number = 30
+  ): Promise<RecommendationResult> {
+    const query = `
+      SELECT
+        p.id,
+        p.name,
+        p.price,
+        COALESCE(
+          (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1),
+          (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order ASC LIMIT 1)
+        ) as image_url,
+        p.category_id,
+        SUM(pv.view_count) as total_views,
+        MAX(pv.viewed_at) as last_viewed_at
+      FROM product_views pv
+      JOIN products p ON pv.product_id = p.id
+      WHERE pv.user_id = $1
+        AND pv.viewed_at > NOW() - INTERVAL '${days} days'
+        AND p.is_active = TRUE
+        AND p.stock > 0
+      GROUP BY p.id
+      ORDER BY total_views DESC, last_viewed_at DESC
+      LIMIT $2
+    `;
+
+    const result = await pool.query(query, [userId, limit]);
+    const recommendations = result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      price: row.price,
+      imageUrl: row.image_url,
+      categoryId: row.category_id,
+      score: parseFloat(row.total_views) || 0
+    }));
+
+    return { recommendations, source: 'frequently_viewed' };
+  }
 }

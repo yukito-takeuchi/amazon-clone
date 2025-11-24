@@ -68,4 +68,22 @@ export class RecommendationController {
       res.status(500).json({ error: 'Failed to get popular products' });
     }
   }
+
+  static async getFrequentlyViewed(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.firebaseUid;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const days = parseInt(req.query.days as string) || 30;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const result = await RecommendationService.getFrequentlyViewedProducts(userId, limit, days);
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting frequently viewed products:', error);
+      res.status(500).json({ error: 'Failed to get frequently viewed products' });
+    }
+  }
 }
