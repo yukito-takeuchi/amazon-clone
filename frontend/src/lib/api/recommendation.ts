@@ -37,4 +37,10 @@ export const recommendationApi = {
     const response = await apiClient.get(`/recommendations/popular?limit=${limit}`);
     return response.data;
   },
+
+  // Get frequently viewed products
+  getFrequentlyViewed: async (limit: number = 10, days: number = 30): Promise<RecommendationResponse> => {
+    const response = await apiClient.get(`/recommendations/frequently-viewed?limit=${limit}&days=${days}`);
+    return response.data;
+  },
 };
