@@ -8,7 +8,7 @@
 
 <div align="center">
 
-![YouTube Clone Demo](https://github.com/yukito-takeuchi/twitter-clone/blob/feature/frontend-setup1/twitter-clone-gif.gif)
+![YouTube Clone Demo](https://github.com/yukito-takeuchi/amazon-clone/blob/feature/frontend-setup2/update_demo.gif)
 
 _実際のアプリケーションの動作デモ_
 
@@ -84,40 +84,40 @@ graph TB
 
 ### Frontend
 
-| 技術 | 用途 |
-|------|------|
+| 技術                    | 用途                |
+| ----------------------- | ------------------- |
 | Next.js 14 (TypeScript) | App Router、SSR/SSG |
-| Material-UI (MUI) | UIコンポーネント |
-| Zustand | 状態管理 |
-| Firebase SDK | 認証 |
-| Stripe.js | 決済UI |
-| Axios | API通信 |
+| Material-UI (MUI)       | UI コンポーネント   |
+| Zustand                 | 状態管理            |
+| Firebase SDK            | 認証                |
+| Stripe.js               | 決済 UI             |
+| Axios                   | API 通信            |
 
 ### Backend (Main API)
 
-| 技術 | 用途 |
-|------|------|
-| Node.js + Express (TypeScript) | REST API |
-| PostgreSQL | メインデータベース |
-| Firebase Admin SDK | トークン検証 |
-| Stripe SDK | 決済処理 |
-| Google Cloud Storage | 画像ストレージ |
-| Resend | メール送信 |
+| 技術                           | 用途               |
+| ------------------------------ | ------------------ |
+| Node.js + Express (TypeScript) | REST API           |
+| PostgreSQL                     | メインデータベース |
+| Firebase Admin SDK             | トークン検証       |
+| Stripe SDK                     | 決済処理           |
+| Google Cloud Storage           | 画像ストレージ     |
+| Resend                         | メール送信         |
 
 ### Microservices
 
-| 技術 | 用途 |
-|------|------|
+| 技術             | 用途               |
+| ---------------- | ------------------ |
 | FastAPI (Python) | レコメンドエンジン |
-| pandas / NumPy | データ分析 |
-| scikit-learn | 協調フィルタリング |
+| pandas / NumPy   | データ分析         |
+| scikit-learn     | 協調フィルタリング |
 
 ### Infrastructure
 
-| 技術 | 用途 |
-|------|------|
-| Docker + Docker Compose | 開発環境 |
-| Vercel | フロントエンドホスティング |
+| 技術                    | 用途                       |
+| ----------------------- | -------------------------- |
+| Docker + Docker Compose | 開発環境                   |
+| Vercel                  | フロントエンドホスティング |
 
 ---
 
