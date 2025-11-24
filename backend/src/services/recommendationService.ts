@@ -28,11 +28,14 @@ export class RecommendationService {
   static async getRecommendations(userId: string, limit: number = 10): Promise<RecommendationResult> {
     // First try category-based recommendations
     const categoryBased = await this.getCategoryBasedRecommendations(userId, limit);
+    console.log(`[Recommendation] User: ${userId}, Category-based results: ${categoryBased.length}`);
+
     if (categoryBased.length > 0) {
       return { recommendations: categoryBased, source: 'category' };
     }
 
     // Fallback to popular products
+    console.log(`[Recommendation] User: ${userId}, Falling back to popular products`);
     const popular = await this.getPopularProductsList(limit);
     return { recommendations: popular, source: 'popular' };
   }
@@ -52,11 +55,6 @@ export class RecommendationService {
         GROUP BY p.category_id
         ORDER BY view_count DESC
         LIMIT 5
-      ),
-      viewed_products AS (
-        SELECT DISTINCT product_id
-        FROM product_views
-        WHERE user_id = $1
       )
       SELECT
         p.id,
@@ -73,7 +71,6 @@ export class RecommendationService {
       FROM products p
       JOIN user_categories uc ON p.category_id = uc.category_id
       WHERE p.is_active = TRUE
-        AND p.id NOT IN (SELECT product_id FROM viewed_products)
         AND p.stock > 0
       ORDER BY score DESC
       LIMIT $2
