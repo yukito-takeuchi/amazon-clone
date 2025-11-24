@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,8 @@ import {
   Button as MuiButton,
   Popover,
   Divider,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
@@ -22,8 +24,14 @@ import SearchIcon from "@mui/icons-material/Search";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
+import { adminApi } from "@/lib/api/admin";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 export const Header: React.FC = () => {
   const router = useRouter();
@@ -32,12 +40,27 @@ export const Header: React.FC = () => {
   const [accountMenuAnchor, setAccountMenuAnchor] =
     useState<HTMLElement | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // ユーザーの名前（姓名の最初の部分を取得）
   const firstName = user?.name?.split(/[\s　]/)[0] || "";
 
   // カートのアイテム数
   const cartCount = cart?.totalItems ?? 0;
+
+  // カテゴリ一覧を取得
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await adminApi.getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -60,12 +83,22 @@ export const Header: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const params = new URLSearchParams();
+
+    // 検索クエリがあれば追加
     if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-    } else {
-      // When empty, navigate to products page without search parameter
-      router.push("/products");
+      params.append('search', searchQuery.trim());
     }
+
+    // カテゴリが選択されていれば追加
+    if (selectedCategory) {
+      params.append('category', selectedCategory);
+    }
+
+    // パラメータがあればクエリ付きで、なければパラメータなしで遷移
+    const queryString = params.toString();
+    router.push(queryString ? `/products?${queryString}` : '/products');
   };
 
   const accountMenuOpen = Boolean(accountMenuAnchor);
@@ -159,26 +192,40 @@ export const Header: React.FC = () => {
             height: 40,
           }}
         >
-          {/* カテゴリドロップダウン */}
-          <MuiButton
-            variant="contained"
+          {/* カテゴリセレクト */}
+          <Select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            displayEmpty
             sx={{
               bgcolor: "#E6E6E6",
               color: "#333",
-              minWidth: 50,
+              minWidth: 150,
+              height: 40,
               borderRadius: "4px 0 0 4px",
-              textTransform: "none",
               fontSize: 14,
-              boxShadow: "none",
-              "&:hover": {
-                bgcolor: "#D5D5D5",
-                boxShadow: "none",
+              "& .MuiOutlinedInput-notchedOutline": {
+                border: "none",
+              },
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                border: "none",
+              },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                border: "2px solid #FF9900",
+              },
+              "& .MuiSelect-select": {
+                padding: "8px 12px",
               },
             }}
-            endIcon={<ArrowDropDownIcon />}
+            IconComponent={ArrowDropDownIcon}
           >
-            すべて
-          </MuiButton>
+            <MenuItem value="">すべてのカテゴリ</MenuItem>
+            {categories.map((category) => (
+              <MenuItem key={category.id} value={category.id}>
+                {category.name}
+              </MenuItem>
+            ))}
+          </Select>
 
           {/* 検索入力 */}
           <TextField
