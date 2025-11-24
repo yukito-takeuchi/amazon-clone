@@ -129,8 +129,8 @@ erDiagram
 
     users {
         uuid id PK
-        varchar firebase_uid UK
-        varchar email UK
+        varchar firebase_uid "UNIQUE"
+        varchar email "UNIQUE"
         varchar name
         varchar avatar_url
         boolean is_admin
@@ -139,7 +139,7 @@ erDiagram
 
     categories {
         serial id PK
-        varchar name UK
+        varchar name "UNIQUE"
         text description
     }
 
@@ -175,7 +175,7 @@ erDiagram
 
     carts {
         serial id PK
-        uuid user_id FK UK
+        uuid user_id FK "UNIQUE"
     }
 
     cart_items {
