@@ -82,23 +82,42 @@ graph TB
 
 ## 🛠️ 使用技術
 
-| カテゴリ           | 技術                           | 用途                       |
-| ------------------ | ------------------------------ | -------------------------- |
-| **Frontend**       | Next.js 14 (TypeScript)        | App Router、SSR/SSG        |
-|                    | Material-UI (MUI)              | UI コンポーネント          |
-|                    | Zustand                        | 状態管理                   |
-|                    | Firebase SDK                   | 認証                       |
-|                    | Stripe.js                      | 決済 UI                    |
-|                    | Axios                          | API 通信                   |
-| **Backend**        | Node.js + Express (TypeScript) | REST API                   |
-|                    | FastAPI (Python)               | レコメンドエンジン         |
-|                    | PostgreSQL                     | メインデータベース         |
-|                    | Firebase Admin SDK             | トークン検証               |
-|                    | Stripe SDK                     | 決済処理                   |
-|                    | Google Cloud Storage           | 画像ストレージ             |
-|                    | Resend                         | メール送信                 |
-| **Infrastructure** | Docker + Docker Compose        | 開発環境                   |
-|                    | Vercel                         | フロントエンドホスティング |
+### Frontend
+
+| 技術 | 用途 |
+|------|------|
+| Next.js 14 (TypeScript) | App Router、SSR/SSG |
+| Material-UI (MUI) | UIコンポーネント |
+| Zustand | 状態管理 |
+| Firebase SDK | 認証 |
+| Stripe.js | 決済UI |
+| Axios | API通信 |
+
+### Backend (Main API)
+
+| 技術 | 用途 |
+|------|------|
+| Node.js + Express (TypeScript) | REST API |
+| PostgreSQL | メインデータベース |
+| Firebase Admin SDK | トークン検証 |
+| Stripe SDK | 決済処理 |
+| Google Cloud Storage | 画像ストレージ |
+| Resend | メール送信 |
+
+### Microservices
+
+| 技術 | 用途 |
+|------|------|
+| FastAPI (Python) | レコメンドエンジン |
+| pandas / NumPy | データ分析 |
+| scikit-learn | 協調フィルタリング |
+
+### Infrastructure
+
+| 技術 | 用途 |
+|------|------|
+| Docker + Docker Compose | 開発環境 |
+| Vercel | フロントエンドホスティング |
 
 ---
 
@@ -258,6 +277,18 @@ erDiagram
 - 📊 商品フィルタリング・ソート
 - 📦 在庫管理
 
+### 🤖 マイクロサービス（FastAPI）
+
+- 🎯 **レコメンドエンジン**
+  - ユーザーの閲覧履歴を分析
+  - カテゴリベースの協調フィルタリング
+  - 時間減衰アルゴリズム適用
+  - リアルタイムレコメンド生成
+- 📊 **データ分析**
+  - 商品人気度スコアリング
+  - ユーザー行動パターン分析
+  - トレンド商品の特定
+
 ---
 
 ## 💡 工夫した点・技術的チャレンジ
@@ -331,7 +362,17 @@ amazon-clone/
 │   │   ├── services/        # ビジネスロジック
 │   │   ├── middleware/      # 認証・バリデーション
 │   │   └── config/          # 設定ファイル
+│   ├── migrations/          # DB マイグレーション
 │   └── package.json
+│
+├── recommendation-service/   # FastAPI マイクロサービス
+│   ├── app/
+│   │   ├── main.py          # エントリーポイント
+│   │   ├── models/          # データモデル
+│   │   ├── services/        # レコメンドロジック
+│   │   └── api/             # APIエンドポイント
+│   ├── requirements.txt
+│   └── Dockerfile
 │
 ├── docker-compose.yml        # Docker構成
 └── README.md
