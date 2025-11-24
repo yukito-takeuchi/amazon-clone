@@ -9,8 +9,11 @@
 <div align="center">
 
 ![YouTube Clone Demo](https://github.com/yukito-takeuchi/amazon-clone/blob/feature/frontend-setup2/update_demo.gif)
-
 _実際のアプリケーションの動作デモ_
+![YouTube Clone Demo](https://github.com/yukito-takeuchi/amazon-clone/blob/feature/frontend-setup2/update_demo2.gif)
+_在庫管理　　フィルタ、ソート機能_
+![YouTube Clon__e Demo](https://github.com/yukito-takeuchi/amazon-clone/blob/feature/frontend-setup2/mail_demo.gif)
+_メール通知機能(resend, 注文完了時、配達完了時など)_
 
 </div>
 
