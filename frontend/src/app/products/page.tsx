@@ -51,6 +51,8 @@ function ProductsPageContent() {
   // フィルタ・ソート変更時
   useEffect(() => {
     if (initialLoadRef.current) {
+      setPage(1);
+      setHasMore(true);
       fetchProducts(1, true);
     }
   }, [searchParams, sortBy]);
@@ -133,12 +135,10 @@ function ProductsPageContent() {
   useEffect(() => {
     const handleIntersect = (entries: IntersectionObserverEntry[]) => {
       if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
-        setPage(prevPage => {
-          const nextPage = prevPage + 1;
-          console.log('Loading page:', nextPage, 'hasMore:', hasMore);
-          fetchProducts(nextPage, false);
-          return nextPage;
-        });
+        const nextPage = page + 1;
+        console.log('Loading page:', nextPage, 'hasMore:', hasMore);
+        setPage(nextPage);
+        fetchProducts(nextPage, false);
       }
     };
 
@@ -151,7 +151,7 @@ function ProductsPageContent() {
     return () => {
       observer.disconnect();
     };
-  }, [hasMore, isLoadingMore, isLoading, searchParams, sortBy]);
+  }, [hasMore, isLoadingMore, isLoading, page]);
 
   const handleAddToCart = async (productId: string) => {
     if (!isAuthenticated) {
