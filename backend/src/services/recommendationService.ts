@@ -62,7 +62,10 @@ export class RecommendationService {
         p.id,
         p.name,
         p.price,
-        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1) as image_url,
+        COALESCE(
+          (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1),
+          (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order ASC LIMIT 1)
+        ) as image_url,
         p.category_id,
         (uc.view_count * 10 + COALESCE(
           (SELECT COUNT(*) FROM product_views WHERE product_id = p.id), 0
@@ -93,7 +96,10 @@ export class RecommendationService {
         p.id,
         p.name,
         p.price,
-        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1) as image_url,
+        COALESCE(
+          (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1),
+          (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order ASC LIMIT 1)
+        ) as image_url,
         p.category_id,
         COUNT(pv.id) as view_count
       FROM products p
@@ -125,7 +131,10 @@ export class RecommendationService {
         p.id,
         p.name,
         p.price,
-        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1) as image_url,
+        COALESCE(
+          (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1),
+          (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order ASC LIMIT 1)
+        ) as image_url,
         p.category_id,
         COALESCE(
           (SELECT COUNT(*) FROM product_views WHERE product_id = p.id), 0
