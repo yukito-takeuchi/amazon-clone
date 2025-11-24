@@ -7,6 +7,7 @@ import { Product } from '@/types/product';
 import { ProductSection } from '@/components/home/ProductSection';
 import { recommendationApi, ProductRecommendation } from '@/lib/api/recommendation';
 import { RecommendationSection } from '@/components/recommendation/RecommendationSection';
+import { FrequentlyViewedProducts } from '@/components/recommendation/FrequentlyViewedProducts';
 import { useAuthStore } from '@/store/authStore';
 
 export default function HomePage() {
@@ -137,6 +138,9 @@ export default function HomePage() {
       {/* Main Content */}
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 1, boxShadow: 1 }}>
+          {/* よく閲覧する商品 (ログイン時のみ) */}
+          {isAuthenticated && <FrequentlyViewedProducts />}
+
           {/* パーソナライズおすすめ (ログイン時のみ) */}
           {isAuthenticated && (
             <RecommendationSection

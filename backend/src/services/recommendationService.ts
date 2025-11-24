@@ -28,11 +28,14 @@ export class RecommendationService {
   static async getRecommendations(userId: string, limit: number = 10): Promise<RecommendationResult> {
     // First try category-based recommendations
     const categoryBased = await this.getCategoryBasedRecommendations(userId, limit);
+    console.log(`[Recommendation] User: ${userId}, Category-based results: ${categoryBased.length}`);
+
     if (categoryBased.length > 0) {
       return { recommendations: categoryBased, source: 'category' };
     }
 
     // Fallback to popular products
+    console.log(`[Recommendation] User: ${userId}, Falling back to popular products`);
     const popular = await this.getPopularProductsList(limit);
     return { recommendations: popular, source: 'popular' };
   }
@@ -52,11 +55,6 @@ export class RecommendationService {
         GROUP BY p.category_id
         ORDER BY view_count DESC
         LIMIT 5
-      ),
-      viewed_products AS (
-        SELECT DISTINCT product_id
-        FROM product_views
-        WHERE user_id = $1
       )
       SELECT
         p.id,
@@ -73,7 +71,6 @@ export class RecommendationService {
       FROM products p
       JOIN user_categories uc ON p.category_id = uc.category_id
       WHERE p.is_active = TRUE
-        AND p.id NOT IN (SELECT product_id FROM viewed_products)
         AND p.stock > 0
       ORDER BY score DESC
       LIMIT $2
@@ -164,5 +161,46 @@ export class RecommendationService {
   static async getPopularProducts(limit: number = 10): Promise<RecommendationResult> {
     const recommendations = await this.getPopularProductsList(limit);
     return { recommendations, source: 'popular' };
+  }
+
+  static async getFrequentlyViewedProducts(
+    userId: string,
+    limit: number = 10,
+    days: number = 30
+  ): Promise<RecommendationResult> {
+    const query = `
+      SELECT
+        p.id,
+        p.name,
+        p.price,
+        COALESCE(
+          (SELECT image_url FROM product_images WHERE product_id = p.id AND is_main = TRUE LIMIT 1),
+          (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order ASC LIMIT 1)
+        ) as image_url,
+        p.category_id,
+        SUM(pv.view_count) as total_views,
+        MAX(pv.viewed_at) as last_viewed_at
+      FROM product_views pv
+      JOIN products p ON pv.product_id = p.id
+      WHERE pv.user_id = $1
+        AND pv.viewed_at > NOW() - INTERVAL '${days} days'
+        AND p.is_active = TRUE
+        AND p.stock > 0
+      GROUP BY p.id
+      ORDER BY total_views DESC, last_viewed_at DESC
+      LIMIT $2
+    `;
+
+    const result = await pool.query(query, [userId, limit]);
+    const recommendations = result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      price: row.price,
+      imageUrl: row.image_url,
+      categoryId: row.category_id,
+      score: parseFloat(row.total_views) || 0
+    }));
+
+    return { recommendations, source: 'frequently_viewed' };
   }
 }
