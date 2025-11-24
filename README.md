@@ -1,14 +1,26 @@
 # Amazon Clone
 
-> フル機能を備えたEコマースプラットフォーム
+> フル機能を備えた E コマースプラットフォーム
 
-🔗 **デモ**: [https://amazon-clone-mocha-chi.vercel.app](https://amazon-clone-mocha-chi.vercel.app)
+---
+
+## 📺 デモ
+
+<div align="center">
+
+![YouTube Clone Demo](https://github.com/yukito-takeuchi/twitter-clone/blob/feature/frontend-setup1/twitter-clone-gif.gif)
+
+_実際のアプリケーションの動作デモ_
+
+</div>
+
+---
 
 ---
 
 ## 📖 概要
 
-Amazonを参考にした、本格的なEコマースサイトです。商品検索・購入・決済・レビュー・レコメンド機能など、実際のECサイトに必要な機能を実装しています。
+Amazon を参考にした、本格的な E コマースサイトです。商品検索・購入・決済・レビュー・レコメンド機能など、実際の EC サイトに必要な機能を実装しています。
 
 ---
 
@@ -70,27 +82,27 @@ graph TB
 
 ## 🛠️ 使用技術
 
-| カテゴリ | 技術 | 用途 |
-|---------|------|------|
-| **Frontend** | Next.js 14 (TypeScript) | App Router、SSR/SSG |
-| | Material-UI (MUI) | UIコンポーネント |
-| | Zustand | 状態管理 |
-| | Firebase SDK | 認証 |
-| | Stripe.js | 決済UI |
-| | Axios | API通信 |
-| **Backend** | Node.js + Express (TypeScript) | REST API |
-| | FastAPI (Python) | レコメンドエンジン |
-| | PostgreSQL | メインデータベース |
-| | Firebase Admin SDK | トークン検証 |
-| | Stripe SDK | 決済処理 |
-| | Google Cloud Storage | 画像ストレージ |
-| | Resend | メール送信 |
-| **Infrastructure** | Docker + Docker Compose | 開発環境 |
-| | Vercel | フロントエンドホスティング |
+| カテゴリ           | 技術                           | 用途                       |
+| ------------------ | ------------------------------ | -------------------------- |
+| **Frontend**       | Next.js 14 (TypeScript)        | App Router、SSR/SSG        |
+|                    | Material-UI (MUI)              | UI コンポーネント          |
+|                    | Zustand                        | 状態管理                   |
+|                    | Firebase SDK                   | 認証                       |
+|                    | Stripe.js                      | 決済 UI                    |
+|                    | Axios                          | API 通信                   |
+| **Backend**        | Node.js + Express (TypeScript) | REST API                   |
+|                    | FastAPI (Python)               | レコメンドエンジン         |
+|                    | PostgreSQL                     | メインデータベース         |
+|                    | Firebase Admin SDK             | トークン検証               |
+|                    | Stripe SDK                     | 決済処理                   |
+|                    | Google Cloud Storage           | 画像ストレージ             |
+|                    | Resend                         | メール送信                 |
+| **Infrastructure** | Docker + Docker Compose        | 開発環境                   |
+|                    | Vercel                         | フロントエンドホスティング |
 
 ---
 
-## 🗄️ データベース設計（ER図）
+## 🗄️ データベース設計（ER 図）
 
 ```mermaid
 erDiagram
@@ -223,12 +235,13 @@ erDiagram
 ## ✨ 主な機能
 
 ### 🛍️ ユーザー機能
-- ✅ Firebase認証 (ログイン・登録)
+
+- ✅ Firebase 認証 (ログイン・登録)
 - 🔍 商品検索 (キーワード・カテゴリ)
 - 🎯 高度なフィルタリング (価格範囲、在庫状態)
 - 📊 並び替え (価格・新着順・名前)
 - 🛒 カート管理 (追加・削除・数量変更)
-- 💳 Stripe決済統合
+- 💳 Stripe 決済統合
 - 📦 注文履歴
 - ⭐ 商品レビュー投稿・閲覧
 - 🎯 レコメンドシステム
@@ -239,7 +252,8 @@ erDiagram
 - 📍 配送先住所管理
 
 ### 👨‍💼 管理者機能
-- 📝 商品管理 (CRUD操作)
+
+- 📝 商品管理 (CRUD 操作)
 - 🖼️ 複数画像アップロード
 - 📊 商品フィルタリング・ソート
 - 📦 在庫管理
@@ -249,37 +263,44 @@ erDiagram
 ## 💡 工夫した点・技術的チャレンジ
 
 ### 1. パーソナライズされたレコメンドシステム
+
 - ユーザーの閲覧履歴に基づくカテゴリベースのレコメンド
 - 時間減衰アルゴリズム（最近の閲覧を重視）
 - 商品の人気度とユーザーの興味を組み合わせたスコアリング
 
 ### 2. 無限スクロール実装
-- Intersection Observer APIを使用したパフォーマンス最適化
+
+- Intersection Observer API を使用したパフォーマンス最適化
 - ページネーション状態管理
 - フィルタ・ソート変更時の適切なリセット処理
 
 ### 3. 画像管理システム
-- Google Cloud Storageへの複数画像アップロード
+
+- Google Cloud Storage への複数画像アップロード
 - メイン画像・サブ画像の管理
 - 画像の並び替え機能
 
 ### 4. 決済フロー
-- Stripe Checkout統合
+
+- Stripe Checkout 統合
 - 在庫チェックと二重購入防止
 - 決済完了後のメール通知（Resend）
 
 ### 5. 複雑な検索・フィルタリング
-- 複数条件を組み合わせた動的SQL生成
-- URLパラメータによる状態管理
+
+- 複数条件を組み合わせた動的 SQL 生成
+- URL パラメータによる状態管理
 - リアルタイムな価格範囲更新
 
-### 6. TypeScript型安全性
-- フロントエンド・バックエンド全体でTypeScript使用
+### 6. TypeScript 型安全性
+
+- フロントエンド・バックエンド全体で TypeScript 使用
 - 厳密な型定義による開発効率向上
 
-### 7. Seedデータによる開発環境整備
-- **カテゴリマスタ**: 10カテゴリ（Electronics、Books、Clothing等）
-- **商品データ**: 各カテゴリ50件、合計500件の商品
+### 7. Seed データによる開発環境整備
+
+- **カテゴリマスタ**: 10 カテゴリ（Electronics、Books、Clothing 等）
+- **商品データ**: 各カテゴリ 50 件、合計 500 件の商品
 - **テストユーザー**: 複数のユーザーアカウント
 - **注文履歴**: ダミー注文データ
 - **レビューデータ**: 商品レビューとレーティング
@@ -321,18 +342,23 @@ amazon-clone/
 ## 📸 スクリーンショット
 
 ### ホーム画面
+
 レコメンド商品、人気商品、新着商品を表示
 
 ### 商品検索画面
+
 フィルタリング・ソート機能、無限スクロール
 
 ### 商品詳細画面
+
 画像ギャラリー、レビュー表示、類似商品
 
 ### カート画面
+
 商品の追加・削除・数量変更
 
 ### 管理者画面
+
 商品管理、画像アップロード
 
 ---
