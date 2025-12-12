@@ -7,6 +7,6 @@ firebase-adminsdk.json
 gcs-keyfile.json
 
 
-uploads/
+# uploads/
 
 
