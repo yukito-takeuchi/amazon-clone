@@ -63,7 +63,7 @@ for (let i = 0; i < lines.length; i++) {
         categoryId: catId,
         folderName: folderName,
         imageNumber: imageNumber,
-        imagePath: `/uploads/seed/${folderName}/${imageNumber}.jpg`
+        imagePath: `/seed/${folderName}/${imageNumber}.jpg`
       });
     }
   }
