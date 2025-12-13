@@ -95,6 +95,7 @@ export default function AdminProductsPage() {
     if (reset) {
       setIsLoading(true);
       setPage(1);
+      setProducts([]); // 先に空にしてから取得
     } else {
       setIsLoadingMore(true);
     }
@@ -114,7 +115,12 @@ export default function AdminProductsPage() {
       if (reset) {
         setProducts(newProducts);
       } else {
-        setProducts(prev => [...prev, ...newProducts]);
+        setProducts(prev => {
+          // 重複を防ぐため、既存のIDをチェック
+          const existingIds = new Set(prev.map(p => p.id));
+          const filteredProducts = newProducts.filter(p => !existingIds.has(p.id));
+          return [...prev, ...filteredProducts];
+        });
       }
       setHasMore(more);
     } catch (error) {
@@ -129,6 +135,9 @@ export default function AdminProductsPage() {
   // Refetch products when filters change
   useEffect(() => {
     if (user?.isAdmin) {
+      // Observer を無効化するため、先に loading 状態にする
+      setIsLoading(true);
+      setPage(1);
       fetchProducts(1, true);
     }
   }, [filters]);

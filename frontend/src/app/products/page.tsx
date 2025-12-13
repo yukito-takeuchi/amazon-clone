@@ -51,6 +51,8 @@ function ProductsPageContent() {
   // フィルタ・ソート変更時
   useEffect(() => {
     if (initialLoadRef.current) {
+      // Observer を無効化するため、先に loading 状態にする
+      setIsLoading(true);
       setPage(1);
       setHasMore(true);
       fetchProducts(1, true);
@@ -63,6 +65,7 @@ function ProductsPageContent() {
     if (reset) {
       setIsLoading(true);
       setPage(1);
+      setProducts([]); // 先に空にしてから取得
     } else {
       setIsLoadingMore(true);
     }
@@ -94,7 +97,12 @@ function ProductsPageContent() {
       if (reset) {
         setProducts(response.products);
       } else {
-        setProducts(prev => [...prev, ...response.products]);
+        setProducts(prev => {
+          // 重複を防ぐため、既存のIDをチェック
+          const existingIds = new Set(prev.map(p => p.id));
+          const newProducts = response.products.filter(p => !existingIds.has(p.id));
+          return [...prev, ...newProducts];
+        });
       }
 
       setTotal(response.total || 0);
@@ -135,10 +143,12 @@ function ProductsPageContent() {
   useEffect(() => {
     const handleIntersect = (entries: IntersectionObserverEntry[]) => {
       if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
-        const nextPage = page + 1;
-        console.log('Loading page:', nextPage, 'hasMore:', hasMore);
-        setPage(nextPage);
-        fetchProducts(nextPage, false);
+        setPage(prevPage => {
+          const nextPage = prevPage + 1;
+          console.log('Loading page:', nextPage, 'hasMore:', hasMore);
+          fetchProducts(nextPage, false);
+          return nextPage;
+        });
       }
     };
 
@@ -151,7 +161,7 @@ function ProductsPageContent() {
     return () => {
       observer.disconnect();
     };
-  }, [hasMore, isLoadingMore, isLoading, page]);
+  }, [hasMore, isLoadingMore, isLoading]);
 
   const handleAddToCart = async (productId: string) => {
     if (!isAuthenticated) {
