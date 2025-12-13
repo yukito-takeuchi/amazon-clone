@@ -135,10 +135,12 @@ function ProductsPageContent() {
   useEffect(() => {
     const handleIntersect = (entries: IntersectionObserverEntry[]) => {
       if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
-        const nextPage = page + 1;
-        console.log('Loading page:', nextPage, 'hasMore:', hasMore);
-        setPage(nextPage);
-        fetchProducts(nextPage, false);
+        setPage(prevPage => {
+          const nextPage = prevPage + 1;
+          console.log('Loading page:', nextPage, 'hasMore:', hasMore);
+          fetchProducts(nextPage, false);
+          return nextPage;
+        });
       }
     };
 
@@ -151,7 +153,7 @@ function ProductsPageContent() {
     return () => {
       observer.disconnect();
     };
-  }, [hasMore, isLoadingMore, isLoading, page]);
+  }, [hasMore, isLoadingMore, isLoading]);
 
   const handleAddToCart = async (productId: string) => {
     if (!isAuthenticated) {
