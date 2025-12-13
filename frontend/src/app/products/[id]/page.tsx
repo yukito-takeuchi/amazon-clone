@@ -125,14 +125,20 @@ export default function ProductDetailPage() {
 
     if (product.images && product.images.length > 0) {
       console.log('Product images found:', product.images);
-      return [...product.images];
+      // Convert relative URLs to absolute URLs
+      return product.images.map(image => ({
+        ...image,
+        imageUrl: image.imageUrl.startsWith('http')
+          ? image.imageUrl
+          : `${process.env.NEXT_PUBLIC_IMAGE_URL}${image.imageUrl}`,
+      }));
     }
 
     // Fallback: If there's a main imageUrl but no images array, create one from imageUrl
     if (product.imageUrl) {
       const mainImageUrl = product.imageUrl.startsWith('http')
         ? product.imageUrl
-        : `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`;
+        : `${process.env.NEXT_PUBLIC_IMAGE_URL}${product.imageUrl}`;
 
       return [{
         id: 0,
