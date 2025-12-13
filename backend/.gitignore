@@ -6,7 +6,10 @@ dist/
 firebase-adminsdk.json
 gcs-keyfile.json
 
-
-uploads/
+# Ignore all uploads except seed data
+uploads/*
+!uploads/seed/
+!uploads/seed/**
+uploads/**/.DS_Store
 
 

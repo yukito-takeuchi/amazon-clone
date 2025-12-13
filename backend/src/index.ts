@@ -66,7 +66,10 @@ app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files (development only)
+// Serve seed data images (always available for development and production)
+app.use('/uploads/seed', express.static(path.join(__dirname, '../uploads/seed')));
+
+// Serve other uploaded files (development only)
 if (process.env.NODE_ENV !== 'production') {
   app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 }
