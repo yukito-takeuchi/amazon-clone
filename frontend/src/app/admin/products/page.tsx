@@ -341,7 +341,7 @@ export default function AdminProductsPage() {
                     if (product.imageUrl.startsWith('http')) {
                       imageUrl = product.imageUrl;
                     } else {
-                      imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.imageUrl}`;
+                      imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}${product.imageUrl}`;
                     }
                   }
 
